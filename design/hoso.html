@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi">
+
+<head>
+	<meta charset="utf-8" />
+	<meta content="width=device-width, initial-scale=1.0, viewport-fit=cover" name="viewport" />
+	<title>Hồ sơ - QuickBite</title>
+	<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;display=swap"
+		rel="stylesheet" />
+	<link
+		href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+		rel="stylesheet" />
+	<link
+		href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+		rel="stylesheet" />
+	<script id="tailwind-config">
+		tailwind.config = {
+			darkMode: "class",
+			theme: {
+				extend: {
+					"colors": {
+						"secondary-fixed": "#e2e2e2",
+						"primary-container": "#d83900",
+						"on-error": "#ffffff",
+						"error-container": "#ffdad6",
+						"primary-fixed": "#ffdbd1",
+						"surface-container-lowest": "#ffffff",
+						"surface-bright": "#fbf9f8",
+						"background": "#fbf9f8",
+						"on-background": "#1b1c1c",
+						"on-tertiary-fixed": "#1a1c1c",
+						"on-secondary-container": "#616363",
+						"secondary": "#5d5f5f",
+						"on-secondary": "#ffffff",
+						"inverse-on-surface": "#f3f0f0",
+						"surface-tint": "#b12d00",
+						"primary-fixed-dim": "#ffb5a0",
+						"surface": "#fbf9f8",
+						"surface-container-low": "#f6f3f2",
+						"on-primary-container": "#fffbff",
+						"primary": "#ad2c00",
+						"on-primary-fixed": "#3b0900",
+						"secondary-fixed-dim": "#c6c6c7",
+						"on-surface": "#1b1c1c",
+						"surface-variant": "#e4e2e1",
+						"on-tertiary": "#ffffff",
+						"on-tertiary-fixed-variant": "#454747",
+						"tertiary-fixed-dim": "#c6c6c7",
+						"on-error-container": "#93000a",
+						"on-secondary-fixed-variant": "#454747",
+						"inverse-surface": "#303030",
+						"surface-dim": "#dcd9d9",
+						"surface-container-highest": "#e4e2e1",
+						"error": "#ba1a1a",
+						"outline-variant": "#e7bdb2",
+						"on-secondary-fixed": "#1a1c1c",
+						"outline": "#926f66",
+						"on-primary-fixed-variant": "#872000",
+						"inverse-primary": "#ffb5a0",
+						"tertiary-container": "#737575",
+						"secondary-container": "#dfe0e0",
+						"surface-container-high": "#eae8e7",
+						"on-primary": "#ffffff",
+						"surface-container": "#f0eded",
+						"on-surface-variant": "#5d4038",
+						"tertiary-fixed": "#e2e2e2",
+						"on-tertiary-container": "#fcfcfc",
+						"tertiary": "#5b5c5c"
+					},
+					"borderRadius": {
+						"DEFAULT": "0.25rem",
+						"lg": "0.5rem",
+						"xl": "0.75rem",
+						"full": "9999px"
+					},
+					"spacing": {
+						"xl": "32px",
+						"unit": "4px",
+						"sm": "8px",
+						"md": "16px",
+						"lg": "24px",
+						"xs": "4px",
+						"container-margin": "16px",
+						"gutter": "12px"
+					},
+					"fontFamily": {
+						"headline-md": ["Inter"],
+						"body-lg": ["Inter"],
+						"headline-lg-mobile": ["Inter"],
+						"headline-lg": ["Inter"],
+						"body-md": ["Inter"],
+						"price-display": ["Inter"],
+						"label-md": ["Inter"],
+						"headline-sm": ["Inter"],
+						"body-sm": ["Inter"]
+					},
+					"fontSize": {
+						"headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+						"body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+						"headline-lg-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+						"headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+						"body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }],
+						"price-display": ["18px", { "lineHeight": "24px", "fontWeight": "700" }],
+						"label-md": ["14px", { "lineHeight": "20px", "fontWeight": "600" }],
+						"headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+						"body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }]
+					}
+				},
+			},
+		}
+	</script>
+	<style>
+		body {
+			font-family: 'Inter', sans-serif;
+			-webkit-tap-highlight-color: transparent;
+		}
+
+		.material-symbols-outlined {
+			font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+		}
+
+		.profile-card-shadow {
+			box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05);
+		}
+
+		.list-item-hover:active {
+			background-color: rgba(223, 224, 224, 0.4);
+			transform: scale(0.98);
+		}
+	</style>
+</head>
+
+<body class="bg-background text-on-background min-h-screen pb-24">
+	<!-- TopAppBar -->
+	<header
+		class="bg-surface dark:bg-surface-dim shadow-sm w-full sticky top-0 flex items-center justify-between px-container-margin h-14 z-40">
+		<button class="text-primary dark:text-primary-fixed-dim hover:opacity-80 Active: scale-95 transition-transform">
+			<span class="material-symbols-outlined">menu</span>
+		</button>
+		<h1
+			class="font-headline-lg-mobile text-headline-lg-mobile text-primary dark:text-primary-fixed-dim tracking-tight">
+			QuickBite</h1>
+		<button class="text-primary dark:text-primary-fixed-dim hover:opacity-80 Active: scale-95 transition-transform">
+			<span class="material-symbols-outlined">shopping_bag</span>
+		</button>
+	</header>
+	<main class="max-w-md mx-auto px-container-margin mt-lg">
+		<!-- User Profile Header Section -->
+		<section class="flex flex-col items-center mb-xl">
+			<div class="relative mb-md">
+				<div class="w-24 h-24 rounded-full overflow-hidden border-4 border-white profile-card-shadow">
+					<img class="w-full h-full object-cover"
+						data-alt="A professional close-up portrait of a friendly young Vietnamese man with a warm smile, set against a clean minimalist studio background. The lighting is soft and high-key, matching a premium modern light-mode app aesthetic. The image features a shallow depth of field, emphasizing high-quality digital photography styles with natural skin tones and sharp details, perfectly suited for a food delivery app user profile."
+						src="https://lh3.googleusercontent.com/aida-public/AB6AXuABQ4La5aOvcwTWaG21LMK1FVowfil83asQ3-tWV0vDct0ECaOwN_HXDvbX-CKMoLJAfeKEiUOZmJo7vHoEkfwZfeNcxPyfuUtZl3Sn9_2EjNMYzAG1TmDRQlE9GcmT1rtqxW6j5RILg3wAzACee9TlBF7vK89GSKvMZqEBvVeNgP8UBCwFpFJ8lehgycjsndm42ngVWblpu72TWXz4xOSqucha1CJdfDytttYZxcARWnE6_tgY_k8" />
+				</div>
+				<button
+					class="absolute bottom-0 right-0 bg-primary text-white p-2 rounded-full shadow-lg hover:scale-110 transition-transform">
+					<span class="material-symbols-outlined text-[18px]">edit</span>
+				</button>
+			</div>
+			<div class="text-center">
+				<h2 class="font-headline-md text-headline-md text-on-surface">Nguyễn Minh Quân</h2>
+				<p class="font-body-md text-on-surface-variant">+84 987 654 321</p>
+			</div>
+		</section>
+		<!-- Profile Stats / Badges (Bento Style Accents) -->
+		<section class="grid grid-cols-2 gap-md mb-xl">
+			<div
+				class="bg-surface-container-low p-md rounded-xl flex flex-col items-center justify-center border border-outline-variant/30">
+				<span class="material-symbols-outlined text-primary mb-1">loyalty</span>
+				<span class="font-label-md text-primary">Thành viên Vàng</span>
+			</div>
+			<div
+				class="bg-surface-container-low p-md rounded-xl flex flex-col items-center justify-center border border-outline-variant/30">
+				<span class="material-symbols-outlined text-primary mb-1">redeem</span>
+				<span class="font-label-md text-primary">1,250 Điểm</span>
+			</div>
+		</section>
+		<!-- Settings List Section -->
+		<section
+			class="bg-white rounded-2xl overflow-hidden profile-card-shadow border border-outline-variant/20 mb-md">
+			<div class="p-md border-b border-outline-variant/10">
+				<h3 class="font-label-md text-on-surface-variant uppercase tracking-wider text-[11px]">Tài khoản &amp;
+					Tiện ích</h3>
+			</div>
+			<nav class="flex flex-col">
+				<!-- Saved Addresses -->
+				<button
+					class="list-item-hover flex items-center px-md py-4 transition-all border-b border-outline-variant/10 text-left w-full group">
+					<div
+						class="w-10 h-10 rounded-full bg-secondary-container/50 flex items-center justify-center mr-md group-hover:bg-primary/10 transition-colors">
+						<span
+							class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">location_on</span>
+					</div>
+					<div class="flex-1">
+						<p class="font-label-md text-on-surface">Địa chỉ đã lưu</p>
+						<p class="text-[12px] text-on-surface-variant">Quản lý các địa điểm nhận hàng</p>
+					</div>
+					<span class="material-symbols-outlined text-outline">chevron_right</span>
+				</button>
+				<!-- Payment Methods -->
+				<button
+					class="list-item-hover flex items-center px-md py-4 transition-all border-b border-outline-variant/10 text-left w-full group">
+					<div
+						class="w-10 h-10 rounded-full bg-secondary-container/50 flex items-center justify-center mr-md group-hover:bg-primary/10 transition-colors">
+						<span
+							class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">payments</span>
+					</div>
+					<div class="flex-1">
+						<p class="font-label-md text-on-surface">Phương thức thanh toán</p>
+						<p class="text-[12px] text-on-surface-variant">Thẻ Visa, MoMo, Ví ZaloPay</p>
+					</div>
+					<span class="material-symbols-outlined text-outline">chevron_right</span>
+				</button>
+				<!-- Help Center -->
+				<button
+					class="list-item-hover flex items-center px-md py-4 transition-all border-b border-outline-variant/10 text-left w-full group">
+					<div
+						class="w-10 h-10 rounded-full bg-secondary-container/50 flex items-center justify-center mr-md group-hover:bg-primary/10 transition-colors">
+						<span
+							class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">help</span>
+					</div>
+					<div class="flex-1">
+						<p class="font-label-md text-on-surface">Trung tâm hỗ trợ</p>
+						<p class="text-[12px] text-on-surface-variant">Giải đáp thắc mắc và khiếu nại</p>
+					</div>
+					<span class="material-symbols-outlined text-outline">chevron_right</span>
+				</button>
+				<!-- Notifications -->
+				<button
+					class="list-item-hover flex items-center px-md py-4 transition-all border-b border-outline-variant/10 text-left w-full group">
+					<div
+						class="w-10 h-10 rounded-full bg-secondary-container/50 flex items-center justify-center mr-md group-hover:bg-primary/10 transition-colors">
+						<span
+							class="material-symbols-outlined text-on-surface-variant group-hover:text-primary transition-colors">notifications</span>
+					</div>
+					<div class="flex-1">
+						<p class="font-label-md text-on-surface">Cài đặt thông báo</p>
+						<p class="text-[12px] text-on-surface-variant">Tùy chỉnh thông báo đơn hàng &amp; khuyến mãi</p>
+					</div>
+					<span class="material-symbols-outlined text-outline">chevron_right</span>
+				</button>
+			</nav>
+		</section>
+		<!-- Support / Referral Card -->
+		<div class="bg-primary-fixed p-md rounded-2xl flex items-center justify-between mb-xl border border-primary/10">
+			<div class="flex-1 pr-md">
+				<h4 class="font-label-md text-on-primary-fixed">Giới thiệu bạn bè</h4>
+				<p class="text-[12px] text-on-primary-fixed-variant">Nhận ngay voucher 50k cho mỗi lượt mời thành công
+				</p>
+			</div>
+			<button
+				class="bg-primary text-white font-label-md py-2 px-4 rounded-xl shadow-sm hover:opacity-90 active:scale-95 transition-all">
+				Mời ngay
+			</button>
+		</div>
+		<!-- Logout Button -->
+		<button
+			class="w-full flex items-center justify-center gap-2 py-4 rounded-2xl bg-error-container text-error hover:bg-error/10 active:scale-95 transition-all duration-200">
+			<span class="material-symbols-outlined">logout</span>
+			<span class="font-label-md">Đăng xuất</span>
+		</button>
+		<p class="text-center text-[12px] text-on-surface-variant mt-xl pb-md">Phiên bản ứng dụng 2.4.12 • QuickBite
+			Việt Nam</p>
+	</main>
+	<!-- BottomNavBar -->
+	<nav
+		class="fixed bottom-0 left-0 w-full z-50 flex justify-around items-center h-16 px-4 pb-safe bg-surface dark:bg-surface-container-lowest border-t border-outline-variant dark:border-none shadow-[0_-4px_12px_0_rgba(0,0,0,0.08)]">
+		<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:bg-secondary-container/20 transition-all duration-200 Active: scale-98"
+			href="#">
+			<span class="material-symbols-outlined">home</span>
+			<span class="font-label-md text-label-md">Home</span>
+		</a>
+		<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:bg-secondary-container/20 transition-all duration-200 Active: scale-98"
+			href="#">
+			<span class="material-symbols-outlined">receipt_long</span>
+			<span class="font-label-md text-label-md">Orders</span>
+		</a>
+		<a class="flex flex-col items-center justify-center text-secondary dark:text-secondary-fixed-dim hover:bg-secondary-container/20 transition-all duration-200 Active: scale-98"
+			href="#">
+			<span class="material-symbols-outlined">redeem</span>
+			<span class="font-label-md text-label-md">Rewards</span>
+		</a>
+		<a class="flex flex-col items-center justify-center text-primary dark:text-primary-fixed-dim font-bold transition-all duration-200 Active: scale-98"
+			href="#">
+			<span class="material-symbols-outlined" style="font-variation-settings: 'FILL' 1;">person</span>
+			<span class="font-label-md text-label-md">Profile</span>
+		</a>
+	</nav>
+	<script>
+		// Simple micro-interaction for list items
+		document.querySelectorAll('.list-item-hover').forEach(button => {
+			button.addEventListener('touchstart', () => {
+				button.classList.add('scale-[0.99]');
+			});
+			button.addEventListener('touchend', () => {
+				button.classList.remove('scale-[0.99]');
+			});
+		});
+	</script>
+</body>
+
+</html>

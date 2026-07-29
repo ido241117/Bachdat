@@ -1,0 +1,402 @@
+<!DOCTYPE html>
+
+<html lang="vi">
+
+<head>
+	<meta charset="utf-8" />
+	<meta content="width=device-width, initial-scale=1.0" name="viewport" />
+	<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700;800&amp;display=swap"
+		rel="stylesheet" />
+	<link
+		href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+		rel="stylesheet" />
+	<link
+		href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+		rel="stylesheet" />
+	<script id="tailwind-config">
+		tailwind.config = {
+			darkMode: "class",
+			theme: {
+				extend: {
+					"colors": {
+						"on-tertiary-container": "#fcfcfc",
+						"on-tertiary": "#ffffff",
+						"inverse-primary": "#ffb5a0",
+						"secondary-fixed": "#e2e2e2",
+						"on-surface": "#1b1c1c",
+						"primary-container": "#d83900",
+						"surface-container-lowest": "#ffffff",
+						"surface-container-low": "#f6f3f2",
+						"tertiary-fixed": "#e2e2e2",
+						"on-primary-fixed-variant": "#872000",
+						"on-secondary-container": "#616363",
+						"on-surface-variant": "#5d4038",
+						"background": "#fbf9f8",
+						"error": "#ba1a1a",
+						"on-primary": "#ffffff",
+						"secondary-fixed-dim": "#c6c6c7",
+						"on-error-container": "#93000a",
+						"tertiary-fixed-dim": "#c6c6c7",
+						"secondary": "#5d5f5f",
+						"tertiary": "#5b5c5c",
+						"inverse-on-surface": "#f3f0f0",
+						"primary-fixed-dim": "#ffb5a0",
+						"on-primary-fixed": "#3b0900",
+						"on-primary-container": "#fffbff",
+						"surface-container-high": "#eae8e7",
+						"on-tertiary-fixed": "#1a1c1c",
+						"on-secondary-fixed": "#1a1c1c",
+						"surface-tint": "#b12d00",
+						"secondary-container": "#dfe0e0",
+						"primary": "#ad2c00",
+						"tertiary-container": "#737575",
+						"inverse-surface": "#303030",
+						"surface-dim": "#dcd9d9",
+						"on-error": "#ffffff",
+						"outline": "#926f66",
+						"on-secondary": "#ffffff",
+						"surface-variant": "#e4e2e1",
+						"surface-bright": "#fbf9f8",
+						"on-secondary-fixed-variant": "#454747",
+						"error-container": "#ffdad6",
+						"outline-variant": "#e7bdb2",
+						"surface": "#fbf9f8",
+						"primary-fixed": "#ffdbd1",
+						"surface-container-highest": "#e4e2e1",
+						"surface-container": "#f0eded",
+						"on-tertiary-fixed-variant": "#454747",
+						"on-background": "#1b1c1c"
+					},
+					"borderRadius": {
+						"DEFAULT": "0.25rem",
+						"lg": "0.5rem",
+						"xl": "0.75rem",
+						"full": "9999px"
+					},
+					"spacing": {
+						"xs": "4px",
+						"sm": "8px",
+						"gutter": "12px",
+						"md": "16px",
+						"lg": "24px",
+						"unit": "4px",
+						"container-margin": "16px",
+						"xl": "32px"
+					},
+					"fontFamily": {
+						"headline-lg": ["Inter"],
+						"headline-md": ["Inter"],
+						"headline-lg-mobile": ["Inter"],
+						"headline-sm": ["Inter"],
+						"label-md": ["Inter"],
+						"body-sm": ["Inter"],
+						"price-display": ["Inter"],
+						"body-lg": ["Inter"],
+						"body-md": ["Inter"]
+					},
+					"fontSize": {
+						"headline-lg": ["32px", { "lineHeight": "40px", "letterSpacing": "-0.02em", "fontWeight": "700" }],
+						"headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+						"headline-lg-mobile": ["24px", { "lineHeight": "32px", "letterSpacing": "-0.01em", "fontWeight": "700" }],
+						"headline-sm": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+						"label-md": ["14px", { "lineHeight": "20px", "fontWeight": "600" }],
+						"body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+						"price-display": ["18px", { "lineHeight": "24px", "fontWeight": "700" }],
+						"body-lg": ["16px", { "lineHeight": "24px", "fontWeight": "400" }],
+						"body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+					}
+				},
+			},
+		}
+	</script>
+	<style>
+		.material-symbols-outlined {
+			font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+			display: inline-block;
+			line-height: 1;
+			text-transform: none;
+			letter-spacing: normal;
+			word-wrap: normal;
+			white-space: nowrap;
+			direction: ltr;
+		}
+
+		.hide-scrollbar::-webkit-scrollbar {
+			display: none;
+		}
+
+		.hide-scrollbar {
+			-ms-overflow-style: none;
+			scrollbar-width: none;
+		}
+
+		.menu-sticky-header {
+			position: sticky;
+			top: 60px;
+			z-index: 40;
+		}
+	</style>
+</head>
+
+<body class="bg-background text-on-surface font-body-md selection:bg-primary-fixed selection:text-on-primary-fixed">
+	<!-- Top Navigation Anchor (Shared Component Mapping) -->
+	<header
+		class="bg-surface border-b border-surface-variant shadow-sm docked full-width top-0 sticky z-50 flex justify-between items-center w-full px-container-margin py-sm">
+		<div class="flex items-center gap-md">
+			<button
+				class="active:scale-95 transition-transform duration-150 p-sm rounded-full hover:bg-surface-container-low"
+				onclick="window.history.back()">
+				<span class="material-symbols-outlined text-primary">arrow_back</span>
+			</button>
+			<span class="text-headline-md font-headline-md font-bold text-primary">QuickBite</span>
+		</div>
+		<div class="flex items-center gap-md">
+			<button
+				class="active:scale-95 transition-transform duration-150 p-sm rounded-full hover:bg-surface-container-low">
+				<span class="material-symbols-outlined text-primary">favorite</span>
+			</button>
+			<button
+				class="active:scale-95 transition-transform duration-150 p-sm rounded-full hover:bg-surface-container-low">
+				<span class="material-symbols-outlined text-primary">share</span>
+			</button>
+		</div>
+	</header>
+	<main class="pb-32">
+		<!-- Restaurant Hero Section -->
+		<section class="relative w-full h-[240px] md:h-[320px]">
+			<div class="w-full h-full bg-cover bg-center"
+				data-alt="A professional high-angle food photography shot of a vibrant Vietnamese restaurant interior with warm lighting and wooden furniture. Fresh green herbs and colorful bowls of noodles are visible on the tables, creating an appetizing and inviting atmosphere. The overall aesthetic is modern, clean, and bright, reflecting a high-end light mode design with warm orange and deep wood tones."
+				style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDdoG0rhEdvGoEMp5V7fpXjUapnL9hX5zi5cIOA0QBbcQXSjJLFBIj6FmTwGO3Jv_7GoouqAiQBPF6EMIXXIH4w3k6_tRD5rkCOjq6B0cyQvZ2v_ZnxR2RZD4vzmnPbCXjgMMnapEHKHsoXcyHY7PY05GMr1ZG8bvpvwX0GFHCOxtmTxnsK9tzSwGz0oFhffQTm4xlXeXcQrB16_T2IrpQBTlOjQMBHdbzhIF5w-8IIhtM4X7oS39k')">
+			</div>
+			<div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+			<div class="absolute bottom-md left-container-margin right-container-margin text-white">
+				<div class="flex items-center gap-xs mb-xs">
+					<span
+						class="bg-primary px-sm py-[2px] rounded-full text-[10px] font-bold uppercase tracking-wider">Phổ
+						biến</span>
+				</div>
+				<h1 class="font-headline-lg-mobile text-headline-lg-mobile md:font-headline-lg md:text-headline-lg">Bếp
+					Việt Delights - Quận 1</h1>
+			</div>
+		</section>
+		<!-- Stats Card -->
+		<section class="px-container-margin -mt-xl relative z-10">
+			<div
+				class="bg-surface rounded-xl p-md shadow-sm border border-surface-variant flex justify-between items-center">
+				<div class="flex flex-col items-center flex-1 border-r border-surface-variant">
+					<div class="flex items-center gap-xs">
+						<span class="material-symbols-outlined text-[#FFC107] text-headline-sm"
+							style="font-variation-settings: 'FILL' 1;">star</span>
+						<span class="font-bold text-headline-sm">4.8</span>
+					</div>
+					<span class="text-body-sm text-secondary">1k+ Đánh giá</span>
+				</div>
+				<div class="flex flex-col items-center flex-1 border-r border-surface-variant">
+					<div class="flex items-center gap-xs">
+						<span class="material-symbols-outlined text-primary text-headline-sm">schedule</span>
+						<span class="font-bold text-headline-sm">25'</span>
+					</div>
+					<span class="text-body-sm text-secondary">Phút giao hàng</span>
+				</div>
+				<div class="flex flex-col items-center flex-1">
+					<div class="flex items-center gap-xs">
+						<span class="material-symbols-outlined text-primary text-headline-sm">location_on</span>
+						<span class="font-bold text-headline-sm">1.2km</span>
+					</div>
+					<span class="text-body-sm text-secondary">Khoảng cách</span>
+				</div>
+			</div>
+		</section>
+		<!-- Category Scroll -->
+		<nav
+			class="menu-sticky-header bg-background border-b border-surface-variant flex overflow-x-auto hide-scrollbar px-container-margin py-md mt-sm gap-md">
+			<a class="whitespace-nowrap px-md py-sm rounded-full bg-primary text-on-primary font-label-md text-label-md"
+				href="#featured">Món nổi bật</a>
+			<a class="whitespace-nowrap px-md py-sm rounded-full bg-surface-container-highest text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low transition-colors"
+				href="#mains">Món chính</a>
+			<a class="whitespace-nowrap px-md py-sm rounded-full bg-surface-container-highest text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low transition-colors"
+				href="#drinks">Đồ uống</a>
+			<a class="whitespace-nowrap px-md py-sm rounded-full bg-surface-container-highest text-on-surface-variant font-label-md text-label-md hover:bg-surface-container-low transition-colors"
+				href="#desserts">Tráng miệng</a>
+		</nav>
+		<!-- Menu Sections -->
+		<div class="mt-md space-y-xl px-container-margin">
+			<!-- Section: Món nổi bật -->
+			<section id="featured">
+				<div class="flex justify-between items-end mb-md">
+					<h2 class="font-headline-md text-headline-md text-on-surface">Món nổi bật</h2>
+					<span class="text-primary text-body-sm font-bold">Bán chạy nhất</span>
+				</div>
+				<div class="grid grid-cols-1 md:grid-cols-2 gap-md">
+					<!-- Featured Card 1 -->
+					<div
+						class="bg-surface rounded-xl overflow-hidden border border-surface-variant shadow-sm group active:scale-[0.98] transition-transform duration-200">
+						<div class="h-40 bg-cover bg-center"
+							data-alt="A close-up, appetizing photo of a steaming bowl of Phở Bò, featuring thinly sliced rare beef, fresh rice noodles, and a rich, clear broth topped with scallions and cilantro. The lighting is bright and natural, highlighting the freshness of the ingredients in a modern, professional food styling manner. Minimalist composition with a warm and inviting color palette."
+							style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuD34uAYy_hpFBjtKvE-kxk8-DF9pzJoEk3laZsQhTCcxWutHvCvkiHEvqEPkE38a_IHxRw6IggJKdZ3IJUheHqfzCEwMM6ncMprzRTZF1yX4JCdXrfRCFyPwBIH2015xK2oJOKJS6Bby6kBUee1rfWmGhp95o9jFL4MEEtZt0q1B2xurt3sbPzJ7UPQBlmK1SZVY3wsEsKFtRNvL3D4ObvHq6BnMPJS1_Y2UDjdMo0xLivRqKWNIoY')">
+						</div>
+						<div class="p-md">
+							<div class="flex justify-between items-start">
+								<h3 class="font-headline-sm text-headline-sm mb-xs">Phở Bò Đặc Biệt</h3>
+								<span class="font-price-display text-price-display text-primary">65.000đ</span>
+							</div>
+							<p class="text-body-sm text-secondary mb-md line-clamp-2">Nước dùng hầm xương 12 tiếng, thịt
+								bò bắp hoa tươi ngon kèm quẩy giòn rụm.</p>
+							<button
+								class="w-full bg-[#FF4500] text-white py-sm rounded-xl font-label-md text-label-md flex justify-center items-center gap-sm active:scale-95 transition-all">
+								<span class="material-symbols-outlined text-[20px]">add</span>
+								Thêm vào giỏ
+							</button>
+						</div>
+					</div>
+					<!-- Featured Card 2 -->
+					<div
+						class="bg-surface rounded-xl overflow-hidden border border-surface-variant shadow-sm group active:scale-[0.98] transition-transform duration-200">
+						<div class="h-40 bg-cover bg-center"
+							data-alt="A gourmet presentation of Bún Chả Hanoi, showcasing grilled pork patties and slices in a flavorful dipping sauce with green papaya. Alongside are fresh vermicelli noodles, crispy spring rolls, and a platter of lush green herbs and lettuce. The shot is well-lit with a bright, airy feeling, emphasizing the vibrant colors of the fresh vegetables and the charred texture of the meat."
+							style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuAwDIF-2y0Ba4C3y5-9yVYr-VDE9GFLcxn-hQVoxgpS2XP-gnuQ0Hm37Ur30ZRotVJPiQ0DKjmssQD2Kot7bC0T3YkHmV7kBUhnsmEBfgzjY7bNbOR-x56VH8XHehqM4GPbCLzPIK-zO4LD1yZdBrEs4-6eOMvwrdXGBIuW3bKqwQDtoMd3yG4u7yXTg7LMTAn-LtK0PQ4p1TX0nqR6bjdto6--QSiBuJgnFov2nCy-vkTOlmlUymk')">
+						</div>
+						<div class="p-md">
+							<div class="flex justify-between items-start">
+								<h3 class="font-headline-sm text-headline-sm mb-xs">Bún Chả Hà Nội</h3>
+								<span class="font-price-display text-price-display text-primary">55.000đ</span>
+							</div>
+							<p class="text-body-sm text-secondary mb-md line-clamp-2">Chả nướng than hoa thơm lừng, nước
+								chấm chua ngọt chuẩn vị phố cổ.</p>
+							<button
+								class="w-full bg-[#FF4500] text-white py-sm rounded-xl font-label-md text-label-md flex justify-center items-center gap-sm active:scale-95 transition-all">
+								<span class="material-symbols-outlined text-[20px]">add</span>
+								Thêm vào giỏ
+							</button>
+						</div>
+					</div>
+				</div>
+			</section>
+			<!-- Section: Món chính -->
+			<section id="mains">
+				<h2 class="font-headline-md text-headline-md text-on-surface mb-md">Món chính</h2>
+				<div class="space-y-sm">
+					<!-- List Item 1 -->
+					<div
+						class="bg-surface p-sm rounded-xl border border-surface-variant flex gap-md items-center group active:scale-[0.99] transition-all">
+						<div class="w-20 h-20 rounded-lg bg-cover bg-center flex-shrink-0"
+							data-alt="A top-down view of Cơm Tấm Sườn Bì Chả, featuring a grilled pork chop with charred edges, shredded pork skin, and a steamed egg meatloaf on a bed of broken rice. The plate is garnished with pickled vegetables and a small bowl of fish sauce. High-energy colors, clear lighting, and a focus on the rich textures of the dish in a minimalist setup."
+							style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBUBva5zlOig1rImU_CrmGW4xAirr-3_aa11fEnx9qAe-LMYCVDtYoheyHiYdRK2w_n3CJqup_4rQ_K-MU1fnQzsp5u4jltzXtXm1hy9Pgz8yI-vhZ7iVhRUAYiH1kjyE1E1IqU_Q2PDZ7VYiSw5PfyYXRUbZ3JW5Ordmu4JEcAFVY3RrRvcZmZtDJWO-m4LGeVxnwiijB0H3q8wzO8-9sYiR_173Uo0ni9FF0L1GQ_93wSt7_hsDg')">
+						</div>
+						<div class="flex-1">
+							<h4 class="font-label-md text-label-md mb-xs">Cơm Tấm Sườn Bì Chả</h4>
+							<p class="text-body-sm text-secondary mb-xs line-clamp-1">Sườn nướng mật ong, bì thính, chả
+								trứng.</p>
+							<span class="font-price-display text-price-display text-primary">45.000đ</span>
+						</div>
+						<button
+							class="w-10 h-10 rounded-full border border-primary text-primary flex items-center justify-center hover:bg-primary-fixed active:scale-90 transition-all">
+							<span class="material-symbols-outlined">add</span>
+						</button>
+					</div>
+					<!-- List Item 2 -->
+					<div
+						class="bg-surface p-sm rounded-xl border border-surface-variant flex gap-md items-center group active:scale-[0.99] transition-all">
+						<div class="w-20 h-20 rounded-lg bg-cover bg-center flex-shrink-0"
+							data-alt="A delicious bowl of Bún Bò Huế, featuring spicy lemongrass broth, thick rice noodles, large chunks of tender beef shank, and cubes of congealed pig blood. Topped with fresh lime, chili, and sliced banana blossoms. Bright and vivid colors, highlighting the deep red spicy broth and fresh green herbs. Clean, high-end photography style."
+							style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBvIjOTQ1rixrlSMG3Ywh4qtudksLjOVZTvSR4bwKrfPh3-1Ji8rJt5onlw5BtNp0eaVpr78PRjoLFyllMYhadcahCPx0AKB3z_vKY3tDTRtvXEUiWEAKn92fjBb9dpKiof_mjK-HhVlZZDaA7FzQFqlkYI0TOWGpxlJaSsVD6YIOo0VMKHmPwx4nd1hJINDshCR8Gug3aFqSQ96z3ORIHVa3pesXdv5lv9UIAa273MwlvCCGGsdrY')">
+						</div>
+						<div class="flex-1">
+							<h4 class="font-label-md text-label-md mb-xs">Bún Bò Huế</h4>
+							<p class="text-body-sm text-secondary mb-xs line-clamp-1">Nước dùng cay nồng, bắp bò, giò
+								heo, chả cua.</p>
+							<span class="font-price-display text-price-display text-primary">60.000đ</span>
+						</div>
+						<button
+							class="w-10 h-10 rounded-full border border-primary text-primary flex items-center justify-center hover:bg-primary-fixed active:scale-90 transition-all">
+							<span class="material-symbols-outlined">add</span>
+						</button>
+					</div>
+				</div>
+			</section>
+			<!-- Section: Đồ uống -->
+			<section id="drinks">
+				<h2 class="font-headline-md text-headline-md text-on-surface mb-md">Đồ uống</h2>
+				<div class="grid grid-cols-2 gap-sm">
+					<!-- Drink Card 1 -->
+					<div
+						class="bg-surface p-sm rounded-xl border border-surface-variant flex flex-col items-center text-center">
+						<div class="w-24 h-24 rounded-full bg-cover bg-center mb-sm"
+							data-alt="A tall glass of Vietnamese Iced Coffee with Condensed Milk (Cà Phê Sữa Đá), showing beautiful dark brown coffee layers mixing with creamy white milk. Clinking ice cubes and a metal coffee drip filter in the background. The mood is cool and refreshing with bright, high-key lighting, ideal for a modern food app."
+							style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBmPg1agCJ-5H0G9lWY7SdiajYr1K5kWMkKWu3Z8i6RJnk1Lfr6nx0eR71M1oL-mzH7CI9y05YMr-uOoDQG8wJbGXIyYxIgx4lIKSya1hMTjeOsRohjleS7zMa8wvYsTY7fLTf13rV2NIIbEsm6Jg0Xxjc1B9zgBQhafSDnqBwWm6lwMupuaYmm7C6SF_QerIICRUHPDh7SEJylVEuAW2KYGg9kcm2ZxVMk9TzL5LlH6ZcJzS-H7sg')">
+						</div>
+						<h4 class="font-label-md text-label-md mb-xs">Cà Phê Sữa Đá</h4>
+						<span class="font-price-display text-price-display text-primary mb-sm">25.000đ</span>
+						<button
+							class="w-full bg-surface-container-highest py-xs rounded-lg text-primary font-bold text-body-sm hover:bg-primary-fixed transition-colors">Thêm</button>
+					</div>
+					<!-- Drink Card 2 -->
+					<div
+						class="bg-surface p-sm rounded-xl border border-surface-variant flex flex-col items-center text-center">
+						<div class="w-24 h-24 rounded-full bg-cover bg-center mb-sm"
+							data-alt="A vibrant glass of iced Peach Tea with real fruit slices and sprigs of fresh mint. The tea is a translucent golden-orange color, with condensation on the glass suggesting it's very cold. Minimalist background with high-quality, bright lighting to emphasize the refreshing quality of the drink."
+							style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuALiopSyqHxqpY2LigMVFTU9yncxl0mHQX8s5IPfhhrUw_pomHu46GTZr4SfC7v-DnDXI8zSHp75m-4McfhB-lSMt3SphjtWpQcHOaUZ0M2C3e9oV-_GUTz_wW1nOc1O6HOoEmUryhFnH4kPZLiXSO2h7GRRM1WFolF_vjTuinKV4q6b7E6IAhc-6-SD1I6_d8shD8cxVHDfvmwjP_HTUABXcKdQgAajA0zxjtkUEaHQxPDu5HuDfw')">
+						</div>
+						<h4 class="font-label-md text-label-md mb-xs">Trà Đào Cam Sả</h4>
+						<span class="font-price-display text-price-display text-primary mb-sm">35.000đ</span>
+						<button
+							class="w-full bg-surface-container-highest py-xs rounded-lg text-primary font-bold text-body-sm hover:bg-primary-fixed transition-colors">Thêm</button>
+					</div>
+				</div>
+			</section>
+		</div>
+	</main>
+	<!-- Floating Mini Cart Bar -->
+	<div
+		class="fixed bottom-0 left-0 right-0 p-container-margin z-[60] bg-gradient-to-t from-background via-background/80 to-transparent pointer-events-none">
+		<div class="max-w-md mx-auto bg-primary text-on-primary rounded-2xl p-md shadow-[0_-4px_12px_rgba(0,0,0,0.12)] flex justify-between items-center pointer-events-auto active:scale-95 transition-all duration-200 cursor-pointer"
+			id="cart-bar">
+			<div class="flex items-center gap-md">
+				<div class="relative">
+					<span class="material-symbols-outlined text-headline-md">shopping_cart</span>
+					<span
+						class="absolute -top-xs -right-xs bg-white text-primary text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center">2</span>
+				</div>
+				<div>
+					<p class="font-label-md text-label-md">2 món đã chọn</p>
+					<p class="text-[12px] opacity-90">Bếp Việt Delights</p>
+				</div>
+			</div>
+			<div class="flex items-center gap-sm">
+				<span class="font-price-display text-price-display">120.000đ</span>
+				<span class="material-symbols-outlined">chevron_right</span>
+			</div>
+		</div>
+	</div>
+	<!-- Bottom Navigation Shell (Invisible when on detail page according to UX goal, but placeholder exists if needed) -->
+	<!-- We prioritize the Cart Bar as it's a transactional flow -->
+	<script>
+		// Simple micro-interaction for adding items
+		const addButtons = document.querySelectorAll('button');
+		addButtons.forEach(btn => {
+			btn.addEventListener('click', (e) => {
+				const cartBar = document.getElementById('cart-bar');
+				cartBar.classList.add('scale-105');
+				setTimeout(() => {
+					cartBar.classList.remove('scale-105');
+				}, 200);
+			});
+		});
+
+		// Horizontal scroll category active state switching
+		const navLinks = document.querySelectorAll('nav a');
+		navLinks.forEach(link => {
+			link.addEventListener('click', function (e) {
+				navLinks.forEach(l => {
+					l.classList.remove('bg-primary', 'text-on-primary');
+					l.classList.add('bg-surface-container-highest', 'text-on-surface-variant');
+				});
+				this.classList.add('bg-primary', 'text-on-primary');
+				this.classList.remove('bg-surface-container-highest', 'text-on-surface-variant');
+			});
+		});
+	</script>
+</body>
+
+</html>

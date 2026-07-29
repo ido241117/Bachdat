@@ -1,0 +1,367 @@
+<!DOCTYPE html>
+
+<html class="light" lang="vi">
+
+<head>
+	<meta charset="utf-8" />
+	<meta content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" name="viewport" />
+	<title>QuickBite - Trang Chủ</title>
+	<script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+	<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&amp;display=swap" rel="stylesheet" />
+	<link
+		href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+		rel="stylesheet" />
+	<link
+		href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+		rel="stylesheet" />
+	<script id="tailwind-config">
+		tailwind.config = {
+			darkMode: "class",
+			theme: {
+				extend: {
+					"colors": {
+						"on-tertiary-container": "#fcfcfc",
+						"on-tertiary": "#ffffff",
+						"inverse-primary": "#ffb5a0",
+						"secondary-fixed": "#e2e2e2",
+						"on-surface": "#1b1c1c",
+						"primary-container": "#d83900",
+						"surface-container-lowest": "#ffffff",
+						"surface-container-low": "#f6f3f2",
+						"tertiary-fixed": "#e2e2e2",
+						"on-primary-fixed-variant": "#872000",
+						"on-secondary-container": "#616363",
+						"on-surface-variant": "#5d4038",
+						"background": "#fbf9f8",
+						"error": "#ba1a1a",
+						"on-primary": "#ffffff",
+						"secondary-fixed-dim": "#c6c6c7",
+						"on-error-container": "#93000a",
+						"tertiary-fixed-dim": "#c6c6c7",
+						"secondary": "#5d5f5f",
+						"tertiary": "#5b5c5c",
+						"inverse-on-surface": "#f3f0f0",
+						"primary-fixed-dim": "#ffb5a0",
+						"on-primary-fixed": "#3b0900",
+						"on-primary-container": "#fffbff",
+						"surface-container-high": "#eae8e7",
+						"on-tertiary-fixed": "#1a1c1c",
+						"on-secondary-fixed": "#1a1c1c",
+						"surface-tint": "#b12d00",
+						"secondary-container": "#dfe0e0",
+						"primary": "#ad2c00",
+						"tertiary-container": "#737575",
+						"inverse-surface": "#303030",
+						"surface-dim": "#dcd9d9",
+						"on-error": "#ffffff",
+						"outline": "#926f66",
+						"on-secondary": "#ffffff",
+						"surface-variant": "#e4e2e1",
+						"surface-bright": "#fbf9f8",
+						"on-secondary-fixed-variant": "#454747",
+						"error-container": "#ffdad6",
+						"outline-variant": "#e7bdb2",
+						"surface": "#fbf9f8",
+						"primary-fixed": "#ffdbd1",
+						"surface-container-highest": "#e4e2e1",
+						"surface-container": "#f0eded",
+						"on-tertiary-fixed-variant": "#454747",
+						"on-background": "#1b1c1c"
+					},
+					"spacing": {
+						"xs": "4px",
+						"sm": "8px",
+						"gutter": "12px",
+						"md": "16px",
+						"lg": "24px",
+						"unit": "4px",
+						"container-margin": "16px",
+						"xl": "32px"
+					},
+					"fontFamily": {
+						"headline-lg": ["Inter"],
+						"headline-md": ["Inter"],
+						"headline-sm": ["Inter"],
+						"label-md": ["Inter"],
+						"body-sm": ["Inter"],
+						"body-md": ["Inter"]
+					},
+					"fontSize": {
+						"headline-sm-mobile": ["18px", { "lineHeight": "24px", "fontWeight": "600" }],
+						"headline-md": ["20px", { "lineHeight": "28px", "fontWeight": "600" }],
+						"label-md": ["14px", { "lineHeight": "20px", "fontWeight": "600" }],
+						"body-sm": ["12px", { "lineHeight": "16px", "fontWeight": "400" }],
+						"body-md": ["14px", { "lineHeight": "20px", "fontWeight": "400" }]
+					}
+				}
+			}
+		}
+	</script>
+	<style>
+		body {
+			font-family: 'Inter', sans-serif;
+			-webkit-tap-highlight-color: transparent;
+		}
+
+		.no-scrollbar::-webkit-scrollbar {
+			display: none;
+		}
+
+		.no-scrollbar {
+			-ms-overflow-style: none;
+			scrollbar-width: none;
+		}
+
+		.material-symbols-outlined {
+			font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
+		}
+	</style>
+</head>
+
+<body class="bg-background text-on-surface min-h-screen pb-[80px]">
+	<!-- TopAppBar -->
+	<header
+		class="bg-surface sticky top-0 z-50 shadow-sm border-b border-surface-variant flex justify-between items-center w-full px-container-margin py-sm">
+		<div class="flex items-center gap-sm">
+			<span class="material-symbols-outlined text-primary" data-icon="location_on">location_on</span>
+			<div class="flex flex-col">
+				<span class="text-label-md font-label-md text-on-surface-variant">Giao đến</span>
+				<span class="text-label-md font-bold text-on-surface">Quận 1, TP. Hồ Chí Minh</span>
+			</div>
+		</div>
+		<div class="flex items-center gap-md">
+			<button
+				class="active:scale-95 transition-transform duration-150 p-sm rounded-full hover:bg-surface-container-low">
+				<span class="material-symbols-outlined text-primary" data-icon="shopping_cart">shopping_cart</span>
+			</button>
+		</div>
+	</header>
+	<main class="max-w-md mx-auto">
+		<!-- Search Bar Section -->
+		<section class="px-container-margin py-md">
+			<div class="relative group">
+				<div class="absolute inset-y-0 left-0 pl-md flex items-center pointer-events-none">
+					<span class="material-symbols-outlined text-secondary" data-icon="search">search</span>
+				</div>
+				<input
+					class="block w-full pl-[48px] pr-md py-sm bg-surface-container-low border-none rounded-full text-body-md focus:ring-2 focus:ring-primary transition-all duration-200 shadow-sm"
+					placeholder="Thèm món gì, QuickBite có món đó..." type="text" />
+			</div>
+		</section>
+		<!-- Big Promotion Banner -->
+		<section class="px-container-margin mb-lg">
+			<div
+				class="relative overflow-hidden rounded-xl h-[180px] group shadow-md transition-transform duration-300 active:scale-[0.98]">
+				<div class="absolute inset-0 bg-cover bg-center"
+					data-alt="A high-quality close-up professional food photography shot of a steaming hot bowl of Vietnamese Pho with fresh herbs, lime, and chili. The lighting is warm and cinematic, emphasizing the vibrant orange and red tones of the broth. The background is a clean, modern restaurant setting with soft bokeh. This appetizing visual highlights a 50% discount promotion for the QuickBite delivery app."
+					style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBqSxov4nwtF8PjMmhMRxltEHN2V5VWNMLuwaTBhlNbwdzJgDeTL1d0F7ntTOm1aMBTM9khYkavgKdXnry-l2QLO9BmgKQhvZozTsaAbpdJNExSHYD7J20tnXaM-7ZOazDOf-uijq_QgRDjcwcGHhvNvAbYSFXGCp7tkUK9Pa2Np--Knc3Q1ndWm1B77J3TuLasxzm-sRpnIiPLtVNlTo3uO046A62sySlBWxhvX1GdjV3ZKvYAps8')">
+				</div>
+				<div
+					class="absolute inset-0 bg-gradient-to-r from-black/60 to-transparent flex flex-col justify-center p-lg">
+					<span class="text-white bg-primary px-sm py-xs rounded-lg text-body-sm font-bold w-fit mb-xs">ƯU ĐÃI
+						KHỦNG</span>
+					<h2 class="text-white font-headline-lg-mobile text-[24px] leading-tight font-bold mb-sm">Giảm ngay
+						50%<br />Cho đơn đầu tiên</h2>
+					<button
+						class="bg-white text-primary px-md py-xs rounded-full font-label-md text-sm w-fit active:scale-95 transition-transform">Đặt
+						Ngay</button>
+				</div>
+			</div>
+		</section>
+		<!-- Categories Section -->
+		<section class="px-container-margin mb-lg">
+			<div class="grid grid-cols-4 gap-md">
+				<div class="flex flex-col items-center gap-xs cursor-pointer group">
+					<div
+						class="w-14 h-14 bg-surface-container-high rounded-2xl flex items-center justify-center group-active:scale-90 transition-all duration-200 shadow-sm">
+						<span class="material-symbols-outlined text-primary text-[28px]"
+							data-icon="rice_bowl">rice_bowl</span>
+					</div>
+					<span class="text-label-md font-label-md text-on-surface">Cơm</span>
+				</div>
+				<div class="flex flex-col items-center gap-xs cursor-pointer group">
+					<div
+						class="w-14 h-14 bg-surface-container-high rounded-2xl flex items-center justify-center group-active:scale-90 transition-all duration-200 shadow-sm">
+						<span class="material-symbols-outlined text-primary text-[28px]"
+							data-icon="bubble_tea">chromecast_2</span>
+					</div>
+					<span class="text-label-md font-label-md text-on-surface">Trà sữa</span>
+				</div>
+				<div class="flex flex-col items-center gap-xs cursor-pointer group">
+					<div
+						class="w-14 h-14 bg-surface-container-high rounded-2xl flex items-center justify-center group-active:scale-90 transition-all duration-200 shadow-sm">
+						<span class="material-symbols-outlined text-primary text-[28px]"
+							data-icon="ramen_dining">ramen_dining</span>
+					</div>
+					<span class="text-label-md font-label-md text-on-surface">Bún/Phở</span>
+				</div>
+				<div class="flex flex-col items-center gap-xs cursor-pointer group">
+					<div
+						class="w-14 h-14 bg-surface-container-high rounded-2xl flex items-center justify-center group-active:scale-90 transition-all duration-200 shadow-sm">
+						<span class="material-symbols-outlined text-primary text-[28px]"
+							data-icon="fastfood">fastfood</span>
+					</div>
+					<span class="text-label-md font-label-md text-on-surface">Ăn vặt</span>
+				</div>
+			</div>
+		</section>
+		<!-- Recommendations Section -->
+		<section class="px-container-margin mb-md">
+			<div class="flex justify-between items-center mb-md">
+				<h3 class="text-headline-sm-mobile font-headline-sm-mobile text-on-surface">Gợi ý cho bạn</h3>
+				<button class="text-primary text-label-md font-label-md hover:underline">Xem tất cả</button>
+			</div>
+			<!-- Restaurant List -->
+			<div class="space-y-md">
+				<!-- Restaurant Card 1 -->
+				<div
+					class="bg-white rounded-xl overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-[#EEEEEE] active:scale-[0.98] transition-all duration-200">
+					<div class="relative h-48">
+						<div class="absolute inset-0 bg-cover bg-center"
+							data-alt="A vibrant professional photo of a modern Korean fried chicken platter with various dipping sauces and crispy fries. The chicken is glazed in a glossy orange-red spicy sauce. Bright, clean overhead lighting emphasizes the texture. The overall style is minimalist and high-end, focusing on fresh ingredients and appetizing presentation."
+							style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuDd_H81L3mw1GheCCPkVqQQnzj-mX84kS7sRnwuug1G7dZetaT9i3I7FpseAebs3EcM6pa9AUsqdyymll_OjBTndYMChL2zi1CMQU5e8InKLCvjCmIftmNYKJo_GAkKB9ux1eFqwQoOE3M0Cv1zlYlh2S3E-xQatuB5YVsKw1fM4kvbugGhOOQl6HihxU1dZQWm9gZaOjPI1T3fPbFqacGSZZO2Pus1isCnRIgX7lY8DVadj_orn4s')">
+						</div>
+						<div
+							class="absolute top-sm right-sm bg-white/90 backdrop-blur-sm px-sm py-xs rounded-full flex items-center gap-xs shadow-sm">
+							<span class="material-symbols-outlined text-[#FFC107] text-sm" data-icon="star"
+								style="font-variation-settings: 'FILL' 1;">star</span>
+							<span class="text-body-sm font-bold text-on-surface">4.8</span>
+						</div>
+						<div
+							class="absolute bottom-sm left-sm bg-primary text-white px-sm py-xs rounded-lg text-body-sm font-bold shadow-sm">
+							Freeship
+						</div>
+					</div>
+					<div class="p-md">
+						<div class="flex justify-between items-start mb-xs">
+							<h4 class="text-headline-sm font-headline-sm text-on-surface">Chicken King - Gà Rán &amp; Mì
+								Ý</h4>
+							<span class="text-primary font-bold text-label-md">$$</span>
+						</div>
+						<p class="text-body-sm text-on-surface-variant mb-sm">Gà rán, Mì Ý, Thức ăn nhanh</p>
+						<div class="flex items-center gap-md text-body-sm text-secondary">
+							<div class="flex items-center gap-xs">
+								<span class="material-symbols-outlined text-sm" data-icon="schedule">schedule</span>
+								<span>25-30 phút</span>
+							</div>
+							<div class="w-1 h-1 bg-outline-variant rounded-full"></div>
+							<div class="flex items-center gap-xs">
+								<span class="material-symbols-outlined text-sm" data-icon="distance">distance</span>
+								<span>1.2 km</span>
+							</div>
+						</div>
+					</div>
+				</div>
+				<!-- Restaurant Card 2 -->
+				<div
+					class="bg-white rounded-xl overflow-hidden shadow-[0_2px_8px_rgba(0,0,0,0.04)] border border-[#EEEEEE] active:scale-[0.98] transition-all duration-200">
+					<div class="relative h-48">
+						<div class="absolute inset-0 bg-cover bg-center"
+							data-alt="A delicious, authentic bowl of Bun Bo Hue with thick rice noodles, tender beef brisket, and fresh herbs in a rich, spicy lemongrass-infused broth. The image features high-energy orange tones from the chili oil and is set against a clean, wooden table background. Professional food styling with shallow depth of field."
+							style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuA3SDt7ick9-gwc3XFZUhi_NNOVj5Al3coZSFN4n7mmqlxg_1buMDAu2AQqvZZuR-rbkusP5wACg5iC1ljIzG-uL6C3A-51pjueqDNVm9LmkG9fWCkF9UeLNTmfiEdTHScRXAuuKcSb6b6SX9cV82z7e0UNCawHWrGhsHBzkUCmK3dSXQfOzf0pIIqKE5G6VdEwwtdm-8ATOUY1nj-jcUhyUu8_2msMVBUm0HfxnoqL5DfTZVTalE4')">
+						</div>
+						<div
+							class="absolute top-sm right-sm bg-white/90 backdrop-blur-sm px-sm py-xs rounded-full flex items-center gap-xs shadow-sm">
+							<span class="material-symbols-outlined text-[#FFC107] text-sm" data-icon="star"
+								style="font-variation-settings: 'FILL' 1;">star</span>
+							<span class="text-body-sm font-bold text-on-surface">4.5</span>
+						</div>
+					</div>
+					<div class="p-md">
+						<div class="flex justify-between items-start mb-xs">
+							<h4 class="text-headline-sm font-headline-sm text-on-surface">Bún Bò Huế Cô Ba</h4>
+							<span class="text-primary font-bold text-label-md">$</span>
+						</div>
+						<p class="text-body-sm text-on-surface-variant mb-sm">Món nước, Đặc sản Huế</p>
+						<div class="flex items-center gap-md text-body-sm text-secondary">
+							<div class="flex items-center gap-xs">
+								<span class="material-symbols-outlined text-sm" data-icon="schedule">schedule</span>
+								<span>15-20 phút</span>
+							</div>
+							<div class="w-1 h-1 bg-outline-variant rounded-full"></div>
+							<div class="flex items-center gap-xs">
+								<span class="material-symbols-outlined text-sm" data-icon="distance">distance</span>
+								<span>0.8 km</span>
+							</div>
+						</div>
+					</div>
+				</div>
+			</div>
+		</section>
+		<!-- Floating Action for Cart (Contextual) -->
+		<div class="fixed bottom-[80px] left-0 w-full px-container-margin z-40 transition-all duration-300 transform translate-y-0"
+			id="view-cart">
+			<div
+				class="bg-primary text-white p-md rounded-xl shadow-[0_-4px_12px_rgba(216,57,0,0.2)] flex justify-between items-center active:scale-95 cursor-pointer">
+				<div class="flex items-center gap-md">
+					<div class="bg-white/20 w-8 h-8 rounded-lg flex items-center justify-center font-bold">1</div>
+					<span class="font-label-md">Xem giỏ hàng</span>
+				</div>
+				<span class="font-bold">45.000đ</span>
+			</div>
+		</div>
+	</main>
+	<!-- BottomNavBar -->
+	<nav
+		class="fixed bottom-0 w-full z-50 rounded-t-xl bg-surface shadow-[0_-4px_12px_rgba(0,0,0,0.08)] border-t border-surface-variant flex justify-around items-center h-[64px] px-md pb-safe">
+		<!-- Home Item (Active) -->
+		<a class="flex flex-col items-center justify-center text-primary font-bold active:scale-90 transition-all duration-200"
+			href="#">
+			<span class="material-symbols-outlined" data-icon="home"
+				style="font-variation-settings: 'FILL' 1;">home</span>
+			<span class="text-label-md font-label-md">Home</span>
+		</a>
+		<!-- Orders Item -->
+		<a class="flex flex-col items-center justify-center text-secondary active:scale-90 transition-all duration-200 hover:text-primary-container"
+			href="#">
+			<span class="material-symbols-outlined" data-icon="receipt_long">receipt_long</span>
+			<span class="text-label-md font-label-md">Orders</span>
+		</a>
+		<!-- Rewards Item -->
+		<a class="flex flex-col items-center justify-center text-secondary active:scale-90 transition-all duration-200 hover:text-primary-container"
+			href="#">
+			<span class="material-symbols-outlined" data-icon="redeem">redeem</span>
+			<span class="text-label-md font-label-md">Rewards</span>
+		</a>
+		<!-- Profile Item -->
+		<a class="flex flex-col items-center justify-center text-secondary active:scale-90 transition-all duration-200 hover:text-primary-container"
+			href="#">
+			<span class="material-symbols-outlined" data-icon="person">person</span>
+			<span class="text-label-md font-label-md">Profile</span>
+		</a>
+	</nav>
+	<script>
+		// Subtle scroll effect for the "View Cart" floating bar
+		let lastScrollTop = 0;
+		const cartBar = document.getElementById('view-cart');
+
+		window.addEventListener('scroll', () => {
+			let scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+			if (scrollTop > lastScrollTop) {
+				// Scroll Down
+				cartBar.style.transform = 'translateY(120%)';
+			} else {
+				// Scroll Up
+				cartBar.style.transform = 'translateY(0)';
+			}
+			lastScrollTop = scrollTop <= 0 ? 0 : scrollTop;
+		}, false);
+
+		// Simple active state feedback for nav items
+		const navLinks = document.querySelectorAll('nav a');
+		navLinks.forEach(link => {
+			link.addEventListener('click', (e) => {
+				navLinks.forEach(l => {
+					l.classList.remove('text-primary', 'font-bold');
+					l.classList.add('text-secondary');
+					l.querySelector('.material-symbols-outlined').style.fontVariationSettings = "'FILL' 0";
+				});
+				link.classList.add('text-primary', 'font-bold');
+				link.classList.remove('text-secondary');
+				link.querySelector('.material-symbols-outlined').style.fontVariationSettings = "'FILL' 1";
+			});
+		});
+	</script>
+</body>
+
+</html>
