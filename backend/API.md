@@ -1,9 +1,9 @@
 # QuickBite API — Frontend Integration Guide
 
-**Base URL (production / device):** `https://bachdat.phanlethien.xyz`  
+**Base URL (production / device):** `https://bachdat.site`  
 **Local:** `http://localhost:8787`
 
-Tunnel Cloudflare `banhang-api` → `localhost:8787` (hostname: `bachdat.phanlethien.xyz`).
+Tunnel Cloudflare `banhang-api` → `localhost:8787` (hostname: `bachdat.site`).
 
 Content-Type: `application/json`  
 Auth header (các route cần login):
@@ -26,7 +26,7 @@ Lỗi chuẩn: `{ "error": "message" }` (HTTP 4xx/5xx).
 
 ```ts
 // src/api/client.ts
-const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://bachdat.phanlethien.xyz';
+const API_URL = process.env.EXPO_PUBLIC_API_URL ?? 'https://bachdat.site';
 
 let token: string | null = null;
 export const setToken = (t: string | null) => { token = t; };
@@ -51,7 +51,7 @@ export async function api<T>(
 
 `.env` mobile:
 ```
-EXPO_PUBLIC_API_URL=https://bachdat.phanlethien.xyz
+EXPO_PUBLIC_API_URL=https://bachdat.site
 # Local only: http://localhost:8787
 # Android emulator local: http://10.0.2.2:8787
 ```

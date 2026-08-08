@@ -76,7 +76,7 @@ export function TopAppBar({
             <MaterialIcons name="arrow-back" size={24} color={Colors.primary} />
           </TouchableOpacity>
         )}
-        <Text style={styles.brandText}>QuickBite</Text>
+        <Text style={styles.brandText}>Mealnow</Text>
       </View>
       {showCart && (
         <TouchableOpacity style={styles.iconBtn} onPress={onCartPress}>

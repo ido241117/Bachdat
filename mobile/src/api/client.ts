@@ -1,5 +1,5 @@
 const API_URL =
-  process.env.EXPO_PUBLIC_API_URL ?? 'https://bachdat.phanlethien.xyz';
+  process.env.EXPO_PUBLIC_API_URL ?? 'https://bachdat.site';
 
 let token: string | null = null;
 

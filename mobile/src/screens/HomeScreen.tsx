@@ -98,7 +98,7 @@ export function HomeScreen({ onRestaurantPress, onCheckoutPress }: Props) {
             <View style={styles.searchBar}>
               <MaterialIcons name="search" size={20} color={Colors.secondary} />
               <TextInput
-                placeholder="Thèm món gì, QuickBite có món đó..."
+                placeholder="Thèm món gì, Mealnow có món đó..."
                 placeholderTextColor={Colors.textLight}
                 style={styles.searchInput}
                 value={search}

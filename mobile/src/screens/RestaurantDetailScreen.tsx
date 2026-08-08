@@ -75,7 +75,7 @@ export function RestaurantDetailScreen({ restaurant, onBack, onCheckoutPress }: 
           <TouchableOpacity style={styles.iconBtn} onPress={onBack}>
             <MaterialIcons name="arrow-back" size={24} color={Colors.primary} />
           </TouchableOpacity>
-          <Text style={styles.brand}>QuickBite</Text>
+          <Text style={styles.brand}>Mealnow</Text>
         </View>
         <View style={styles.headerRight}>
           <TouchableOpacity style={styles.iconBtn}>

@@ -1,0 +1,11 @@
+# Copy tới: %USERPROFILE%\.cloudflared\config.yml
+# Thay <TUNNEL_ID> bằng UUID sau `cloudflared tunnel create banhang-api`
+# (credentials file thường nằm cạnh: %USERPROFILE%\.cloudflared\<TUNNEL_ID>.json)
+
+tunnel: <TUNNEL_ID>
+credentials-file: C:\Users\<YOU>\.cloudflared\<TUNNEL_ID>.json
+
+ingress:
+  - hostname: bachdat.site
+    service: http://localhost:8787
+  - service: http_status:404

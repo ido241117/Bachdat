@@ -119,7 +119,7 @@ export function ProfileScreen() {
           <Text style={styles.logoutText}>Đăng xuất</Text>
         </TouchableOpacity>
 
-        <Text style={styles.version}>QuickBite v2.4.12</Text>
+        <Text style={styles.version}>Mealnow v2.4.12</Text>
       </ScrollView>
     </View>
   );
