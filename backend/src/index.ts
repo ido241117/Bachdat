@@ -25,7 +25,7 @@ async function main() {
     res.json({
       status: "ok",
       timestamp: new Date().toISOString(),
-      service: "quickbite-api",
+      service: "mealnow-api",
     });
   });
 
@@ -41,7 +41,7 @@ async function main() {
   app.use(errorHandler);
 
   app.listen(env.port, () => {
-    console.log(`QuickBite API → http://localhost:${env.port}`);
+    console.log(`Mealnow API → http://localhost:${env.port}`);
   });
 }
 

@@ -39,7 +39,7 @@ export function CheckoutScreen({ onBack }: Props) {
   const [placed, setPlaced] = useState(false);
   const [address, setAddress] = useState<ApiAddress | null>(null);
   const [discount, setDiscount] = useState(0);
-  const [voucherCode, setVoucherCode] = useState('QUICKBITE20');
+  const [voucherCode, setVoucherCode] = useState('MEALNOW20');
 
   const deliveryFee = items.length > 0 ? 15000 : 0;
   const total = Math.max(0, subtotal + deliveryFee - discount);
@@ -287,7 +287,7 @@ export function CheckoutScreen({ onBack }: Props) {
           </View>
           <TouchableOpacity
             style={styles.promoBtn}
-            onPress={() => setVoucherCode('QUICKBITE20')}
+            onPress={() => setVoucherCode('MEALNOW20')}
           >
             <MaterialIcons name="confirmation-number" size={20} color={Colors.primary} />
             <Text style={styles.promoText}>Sửa mã giảm giá</Text>

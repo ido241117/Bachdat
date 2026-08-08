@@ -30,7 +30,7 @@ const userSchema = new Schema(
   {
     phone: { type: String, required: true, unique: true, index: true },
     passwordHash: { type: String },
-    name: { type: String, default: "Người dùng QuickBite" },
+    name: { type: String, default: "Người dùng Mealnow" },
     avatar: { type: String, default: "" },
     tier: {
       type: String,

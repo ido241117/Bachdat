@@ -307,7 +307,7 @@ async function seed() {
 
   const vouchers = await Voucher.insertMany([
     {
-      code: "QUICKBITE20",
+      code: "MEALNOW20",
       type: "discount_percent",
       title: "Giảm 20% đơn hàng",
       description: "Giảm 20%, tối đa 30.000đ cho đơn từ 100k",

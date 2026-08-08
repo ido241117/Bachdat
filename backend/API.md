@@ -1,4 +1,4 @@
-# QuickBite API — Frontend Integration Guide
+# Mealnow API — Frontend Integration Guide
 
 **Base URL (production / device):** `https://bachdat.site`  
 **Local:** `http://localhost:8787`
@@ -246,7 +246,7 @@ Rule: **1 quán / 1 giỏ** — đổi quán thì clear items cũ.
 
 ```json
 // body
-{ "code": "QUICKBITE20", "subtotal": 120000, "deliveryFee": 15000 }
+{ "code": "MEALNOW20", "subtotal": 120000, "deliveryFee": 15000 }
 
 // ok
 { "valid": true, "voucher": { ... }, "discount": 24000, "message": "Giảm 24.000đ" }
@@ -274,7 +274,7 @@ Rule: **1 quán / 1 giỏ** — đổi quán thì clear items cũ.
     "lng": 106.7009
   },
   "paymentMethod": "momo",
-  "voucherCode": "QUICKBITE20",
+  "voucherCode": "MEALNOW20",
   "note": "",
   "deliveryFee": 15000
 }
@@ -356,7 +356,7 @@ Lưu vào `users.savedVoucherIds`.
 ### `GET /rewards/missions`
 Static config nhiệm vụ săn điểm (không cần auth).
 
-**Voucher seed dùng thử:** `QUICKBITE20`, `FREESHIP`, `GIAM30K`, `MOMO10`.
+**Voucher seed dùng thử:** `MEALNOW20`, `FREESHIP`, `GIAM30K`, `MOMO10`.
 
 ---
 
@@ -392,7 +392,7 @@ export const formatReviews = (n: number) =>
 ## 12. Health check
 
 ```
-GET /health → { status: "ok", service: "quickbite-api", timestamp }
+GET /health → { status: "ok", service: "mealnow-api", timestamp }
 ```
 
 Backend chạy: `cd backend && npm run seed && npm run dev`
