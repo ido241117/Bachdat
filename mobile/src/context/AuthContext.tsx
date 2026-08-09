@@ -14,13 +14,11 @@ import type { ApiUser } from '../api/types';
 
 const TOKEN_KEY = 'mealnow_token';
 const USER_KEY = 'mealnow_user';
-const DEMO_PHONE = '0901234567';
-const DEMO_OTP = '123456';
 
 type AuthContextValue = {
   user: ApiUser | null;
   ready: boolean;
-  loginDemo: () => Promise<void>;
+  login: (phone: string, otp: string) => Promise<void>;
   logout: () => Promise<void>;
 };
 
@@ -39,9 +37,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ]);
   }, []);
 
-  const loginDemo = useCallback(async () => {
-    await authApi.requestOtp(DEMO_PHONE);
-    const { token, user: nextUser } = await authApi.login(DEMO_PHONE, DEMO_OTP);
+  const login = useCallback(async (phone: string, otp: string) => {
+    const { token, user: nextUser } = await authApi.login(phone, otp);
     await persist(token, nextUser);
   }, [persist]);
 
@@ -69,13 +66,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         if (savedToken && savedUser) {
           setToken(savedToken);
           if (!cancelled) setUser(JSON.parse(savedUser) as ApiUser);
-        } else {
-          await authApi.requestOtp(DEMO_PHONE);
-          const { token, user: nextUser } = await authApi.login(
-            DEMO_PHONE,
-            DEMO_OTP,
-          );
-          if (!cancelled) await persist(token, nextUser);
         }
       } catch (err) {
         console.warn('Auth bootstrap failed', err);
@@ -87,11 +77,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [persist]);
+  }, []);
 
   const value = useMemo(
-    () => ({ user, ready, loginDemo, logout }),
-    [user, ready, loginDemo, logout],
+    () => ({ user, ready, login, logout }),
+    [user, ready, login, logout],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
