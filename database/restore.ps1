@@ -1,7 +1,7 @@
-# Restore quickbite database from JSON dump (requires mongosh)
+# Restore mealnow database from JSON dump (requires mongosh)
 $ErrorActionPreference = "Stop"
 $mongosh = "C:\Users\ADMIN\AppData\Local\Programs\mongosh\mongosh.exe"
-$uri = "mongodb://localhost:27017/quickbite"
+$uri = "mongodb://localhost:27017/mealnow"
 $dumpDir = Join-Path $PSScriptRoot "quickbite"
 
 if (-not (Test-Path $mongosh)) {

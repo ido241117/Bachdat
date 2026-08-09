@@ -21,6 +21,15 @@ async function main() {
   app.use(cors());
   app.use(express.json());
 
+  app.get("/", (_req, res) => {
+    res.json({
+      service: "mealnow-api",
+      status: "ok",
+      health: "/health",
+      docs: "See backend/API.md",
+    });
+  });
+
   app.get("/health", (_req, res) => {
     res.json({
       status: "ok",

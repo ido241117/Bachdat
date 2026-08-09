@@ -7,7 +7,7 @@ npm run seed    # lần đầu / reset data MongoDB
 npm run dev
 ```
 
-MongoDB local: `mongodb://localhost:27017/quickbite`
+MongoDB local: `mongodb://localhost:27017/mealnow`
 
 Demo login: phone `0901234567` / OTP `123456`
 
