@@ -30,4 +30,5 @@ export const VOUCHER_FILTERS = [
   'Freeship',
   'Giảm giá món',
   'Thanh toán',
+  'Đã lưu',
 ] as const;

@@ -26,6 +26,11 @@ const CATEGORY_ICONS: Record<string, keyof typeof MaterialCommunityIcons.glyphMa
   cup: 'cup',
   noodles: 'noodles',
   food: 'food',
+  bread: 'bread-slice',
+  pizza: 'pizza',
+  fish: 'fish',
+  drumstick: 'food-drumstick',
+  coffee: 'coffee',
 };
 
 type SortKey = 'popular' | 'near' | 'rating';

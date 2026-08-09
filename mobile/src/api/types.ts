@@ -63,6 +63,31 @@ export type ApiAddress = {
   isDefault?: boolean;
 };
 
+export type AddressInput = {
+  label: string;
+  fullAddress: string;
+  note?: string;
+  isDefault?: boolean;
+  lat?: number;
+  lng?: number;
+};
+
+export type ApiCartItem = {
+  menuItemId: string;
+  name: string;
+  price: number;
+  quantity: number;
+  options?: string[];
+  note?: string;
+  image?: string;
+};
+
+export type ApiCart = {
+  restaurantId: string | null;
+  restaurantName: string;
+  items: ApiCartItem[];
+};
+
 export type ApiOrderItem = {
   menuItemId: string;
   name: string;

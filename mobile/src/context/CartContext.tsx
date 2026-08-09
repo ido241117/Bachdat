@@ -2,11 +2,14 @@ import {
   createContext,
   useCallback,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
 } from 'react';
 import type { MenuItem } from '../data/restaurants';
+import { cartApi } from '../api';
+import { useAuth } from './AuthContext';
 
 export type CartLine = {
   menuItemId: string;
@@ -39,9 +42,65 @@ type CartContextValue = {
 const CartContext = createContext<CartContextValue | null>(null);
 
 export function CartProvider({ children }: { children: ReactNode }) {
+  const { ready, user } = useAuth();
   const [restaurantId, setRestaurantId] = useState<string | null>(null);
   const [restaurantName, setRestaurantName] = useState<string | null>(null);
   const [items, setItems] = useState<CartLine[]>([]);
+  const [hydrated, setHydrated] = useState(false);
+
+  useEffect(() => {
+    if (!ready) return;
+
+    if (!user) {
+      setRestaurantId(null);
+      setRestaurantName(null);
+      setItems([]);
+      setHydrated(false);
+      return;
+    }
+
+    let cancelled = false;
+    cartApi
+      .get()
+      .then((cart) => {
+        if (cancelled) return;
+        setRestaurantId(cart.restaurantId);
+        setRestaurantName(cart.restaurantName || null);
+        setItems(
+          cart.items.map((i) => ({
+            menuItemId: i.menuItemId,
+            name: i.name,
+            price: i.price,
+            quantity: i.quantity,
+            options: i.options || [],
+            note: i.note || '',
+            image: i.image || '',
+          })),
+        );
+      })
+      .catch(() => {
+        // start with an empty local cart if the fetch fails
+      })
+      .finally(() => {
+        if (!cancelled) setHydrated(true);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [ready, user?.id]);
+
+  useEffect(() => {
+    if (!hydrated) return;
+    const t = setTimeout(() => {
+      cartApi
+        .replace({ restaurantId, restaurantName: restaurantName || '', items })
+        .catch(() => {
+          // best-effort sync; local state remains the source of truth
+        });
+    }, 400);
+    return () => clearTimeout(t);
+  }, [hydrated, restaurantId, restaurantName, items]);
 
   const clear = useCallback(() => {
     setRestaurantId(null);

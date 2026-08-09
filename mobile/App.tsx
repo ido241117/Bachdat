@@ -20,6 +20,7 @@ import { RestaurantDetailScreen } from './src/screens/RestaurantDetailScreen';
 import { CheckoutScreen } from './src/screens/CheckoutScreen';
 import { TrackingScreen } from './src/screens/TrackingScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
+import { AddressesScreen } from './src/screens/AddressesScreen';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { CartProvider } from './src/context/CartContext';
 
@@ -29,6 +30,7 @@ export type RootStackParamList = {
   Tracking: { orderId: string };
   Rewards: undefined;
   Login: undefined;
+  Addresses: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
@@ -86,6 +88,7 @@ function MainTabs() {
           <ProfileScreen
             onOpenRewards={() => navigation.navigate('Rewards')}
             onOpenOrders={goOrders}
+            onOpenAddresses={() => navigation.navigate('Addresses')}
           />
         );
     }
@@ -135,6 +138,11 @@ function RewardsWrapper() {
   return <RewardsScreen onBack={() => navigation.goBack()} />;
 }
 
+function AddressesWrapper() {
+  const navigation = useNavigation<Nav>();
+  return <AddressesScreen onBack={() => navigation.goBack()} />;
+}
+
 function RootNavigator() {
   const { ready, user } = useAuth();
 
@@ -154,6 +162,7 @@ function RootNavigator() {
           <Stack.Screen name="RestaurantDetail" component={RestaurantDetailWrapper} />
           <Stack.Screen name="Tracking" component={TrackingWrapper} />
           <Stack.Screen name="Rewards" component={RewardsWrapper} />
+          <Stack.Screen name="Addresses" component={AddressesWrapper} />
         </>
       ) : (
         <Stack.Screen name="Login" component={LoginScreen} />

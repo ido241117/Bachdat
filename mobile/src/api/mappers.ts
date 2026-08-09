@@ -23,6 +23,11 @@ const CATEGORY_ICON_MAP: Record<string, string> = {
   bubble_tea: 'cup',
   ramen_dining: 'noodles',
   fastfood: 'food',
+  bakery: 'bread',
+  pizza: 'pizza',
+  sushi: 'fish',
+  chicken: 'drumstick',
+  coffee: 'coffee',
 };
 
 export function mapCategory(c: ApiCategory) {

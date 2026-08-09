@@ -6,6 +6,8 @@ import type {
   ApiWallet,
   ApiMission,
   ApiAddress,
+  AddressInput,
+  ApiCart,
   HomeResponse,
   MenuResponse,
 } from './types';
@@ -38,7 +40,6 @@ export const homeApi = {
 
 export const restaurantApi = {
   getMenu: (id: string) => api<MenuResponse>(`/restaurants/${id}/menu`),
-  getById: (id: string) => api(`/restaurants/${id}`),
 };
 
 export type TrackingStep = {
@@ -106,6 +107,24 @@ export const vouchersApi = {
 };
 
 export const userApi = {
-  me: () => api<ApiUser & { addresses?: ApiAddress[] }>('/users/me'),
   addresses: () => api<ApiAddress[]>('/users/me/addresses'),
+  savedVouchers: () => api<ApiVoucher[]>('/users/me/vouchers'),
+  addAddress: (body: AddressInput) =>
+    api<ApiAddress>('/users/me/addresses', {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
+  updateAddress: (id: string, body: Partial<AddressInput>) =>
+    api<ApiAddress>(`/users/me/addresses/${id}`, {
+      method: 'PATCH',
+      body: JSON.stringify(body),
+    }),
+  deleteAddress: (id: string) =>
+    api<{ ok: boolean }>(`/users/me/addresses/${id}`, { method: 'DELETE' }),
+};
+
+export const cartApi = {
+  get: () => api<ApiCart>('/cart'),
+  replace: (body: ApiCart) =>
+    api<ApiCart>('/cart', { method: 'PUT', body: JSON.stringify(body) }),
 };

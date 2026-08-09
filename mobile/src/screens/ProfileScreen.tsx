@@ -7,8 +7,6 @@ import {
   Image,
   StyleSheet,
   ActivityIndicator,
-  Modal,
-  Pressable,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
@@ -27,12 +25,12 @@ const FALLBACK_AVATAR =
 interface Props {
   onOpenRewards: () => void;
   onOpenOrders: () => void;
+  onOpenAddresses: () => void;
 }
 
-export function ProfileScreen({ onOpenRewards, onOpenOrders }: Props) {
+export function ProfileScreen({ onOpenRewards, onOpenOrders, onOpenAddresses }: Props) {
   const { user, ready, logout } = useAuth();
   const [addresses, setAddresses] = useState<ApiAddress[]>([]);
-  const [addressOpen, setAddressOpen] = useState(false);
   const [recentOrder, setRecentOrder] = useState<Order | null>(null);
 
   useEffect(() => {
@@ -78,7 +76,7 @@ export function ProfileScreen({ onOpenRewards, onOpenOrders }: Props) {
       icon: 'location-on' as const,
       title: 'Địa chỉ đã lưu',
       subtitle: `${addresses.length} địa chỉ`,
-      onPress: () => setAddressOpen(true),
+      onPress: onOpenAddresses,
     },
     {
       icon: 'receipt-long' as const,
@@ -166,23 +164,6 @@ export function ProfileScreen({ onOpenRewards, onOpenOrders }: Props) {
 
         <Text style={styles.version}>Mealnow v2.4.12</Text>
       </ScrollView>
-
-      <Modal visible={addressOpen} transparent animationType="slide">
-        <Pressable style={styles.modalBg} onPress={() => setAddressOpen(false)}>
-          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.sheetTitle}>Địa chỉ đã lưu</Text>
-            {addresses.map((a) => (
-              <View key={a._id} style={styles.addressItem}>
-                <Text style={styles.addressLabel}>{a.label}</Text>
-                <Text style={styles.addressFull}>{a.fullAddress}</Text>
-              </View>
-            ))}
-            {addresses.length === 0 && (
-              <Text style={styles.empty}>Chưa có địa chỉ</Text>
-            )}
-          </Pressable>
-        </Pressable>
-      </Modal>
     </View>
   );
 }
@@ -277,25 +258,4 @@ const styles = StyleSheet.create({
     color: Colors.textLight,
     fontSize: 12,
   },
-  modalBg: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.4)',
-    justifyContent: 'flex-end',
-  },
-  sheet: {
-    backgroundColor: Colors.white,
-    borderTopLeftRadius: 20,
-    borderTopRightRadius: 20,
-    padding: 20,
-    maxHeight: '50%',
-  },
-  sheetTitle: { fontSize: 17, fontWeight: '700', marginBottom: 12 },
-  addressItem: {
-    paddingVertical: 10,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.outlineVariant,
-  },
-  addressLabel: { fontWeight: '700', color: Colors.onSurface },
-  addressFull: { fontSize: 13, color: Colors.secondary, marginTop: 2 },
-  empty: { color: Colors.secondary, paddingVertical: 16 },
 });

@@ -17,7 +17,7 @@ import {
   Mission,
 } from '../data/vouchers';
 import { formatNextTier, formatTierLabel } from '../api/format';
-import { rewardsApi, vouchersApi } from '../api';
+import { rewardsApi, userApi, vouchersApi } from '../api';
 import { mapBanner, mapMission, mapVoucher } from '../api/mappers';
 import { TopAppBar } from '../components/TopAppBar';
 import { useAuth } from '../context/AuthContext';
@@ -29,6 +29,7 @@ const FILTER_MAP: Record<string, string | undefined> = {
   Freeship: 'freeship',
   'Giảm giá món': 'discount',
   'Thanh toán': 'payment',
+  'Đã lưu': undefined,
 };
 
 function VoucherCard({ voucher, onSave }: { voucher: Voucher; onSave: (id: string) => void }) {
@@ -108,12 +109,16 @@ export function RewardsScreen({ onBack }: { onBack?: () => void }) {
       try {
         setLoading(true);
         const filter = FILTER_MAP[activeFilter];
-        const [wallet, voucherList, missionList] = await Promise.all([
+        const isSavedView = activeFilter === 'Đã lưu';
+        const [wallet, voucherList, missionList, savedList] = await Promise.all([
           rewardsApi.wallet(),
-          vouchersApi.list(filter),
+          isSavedView ? Promise.resolve([]) : vouchersApi.list(filter),
           rewardsApi.missions(),
+          userApi.savedVouchers().catch(() => []),
         ]);
         if (cancelled) return;
+        const savedIds = savedList.map((v) => v._id);
+        setSavedVouchers(savedIds);
         setLoyalty({
           tier: formatTierLabel(wallet.tier, wallet.tierLabel),
           points: wallet.points,
@@ -122,8 +127,9 @@ export function RewardsScreen({ onBack }: { onBack?: () => void }) {
           progress: wallet.progress / 100,
         });
         setBanners(wallet.banners.map(mapBanner));
+        const displayList = isSavedView ? savedList : voucherList;
         setVouchers(
-          voucherList.map((v) => mapVoucher(v, savedVouchers.includes(v._id))),
+          displayList.map((v) => mapVoucher(v, savedIds.includes(v._id))),
         );
         setMissions(missionList.map(mapMission));
       } catch (err) {
@@ -251,13 +257,17 @@ export function RewardsScreen({ onBack }: { onBack?: () => void }) {
         </ScrollView>
 
         <View style={styles.voucherList}>
-          {vouchers.map((voucher) => (
-            <VoucherCard
-              key={voucher.id}
-              voucher={voucher}
-              onSave={handleSave}
-            />
-          ))}
+          {vouchers.length === 0 && activeFilter === 'Đã lưu' ? (
+            <Text style={styles.emptySaved}>Bạn chưa lưu voucher nào</Text>
+          ) : (
+            vouchers.map((voucher) => (
+              <VoucherCard
+                key={voucher.id}
+                voucher={voucher}
+                onSave={handleSave}
+              />
+            ))
+          )}
         </View>
 
         <View style={styles.missionsSection}>
@@ -454,6 +464,11 @@ const styles = StyleSheet.create({
   voucherList: {
     paddingHorizontal: 16,
     gap: 16,
+  },
+  emptySaved: {
+    textAlign: 'center',
+    color: Colors.onSurfaceVariant,
+    paddingVertical: 24,
   },
   voucherCard: {
     flexDirection: 'row',
