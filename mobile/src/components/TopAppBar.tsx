@@ -38,7 +38,7 @@ export function TopAppBar({
         <View style={styles.orangeRow}>
           <View style={styles.brandBlock}>
             <Image
-              source={require('../../assets/mealnow_logo.png')}
+              source={require('../../assets/icon.png')}
               style={styles.logo}
               resizeMode="contain"
             />
