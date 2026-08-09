@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -6,46 +7,59 @@ import {
   Image,
   StyleSheet,
   ActivityIndicator,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import { formatTierLabel } from '../api/format';
+import { ordersApi, userApi } from '../api';
+import type { ApiAddress } from '../api/types';
 import { TopAppBar } from '../components/TopAppBar';
 import { useAuth } from '../context/AuthContext';
+import { mapOrder } from '../api/mappers';
+import type { Order } from '../data/orders';
+import { formatPrice } from '../api/format';
 
 const FALLBACK_AVATAR =
   'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200';
 
-const MENU_ITEMS = [
-  {
-    icon: 'location-on' as const,
-    title: 'Địa chỉ đã lưu',
-    subtitle: 'Quản lý các địa điểm nhận hàng',
-  },
-  {
-    icon: 'payments' as const,
-    title: 'Phương thức thanh toán',
-    subtitle: 'Thẻ Visa, MoMo, Ví ZaloPay',
-  },
-  {
-    icon: 'help' as const,
-    title: 'Trung tâm hỗ trợ',
-    subtitle: 'Giải đáp thắc mắc và khiếu nại',
-  },
-  {
-    icon: 'notifications' as const,
-    title: 'Cài đặt thông báo',
-    subtitle: 'Tùy chỉnh thông báo đơn hàng & khuyến mãi',
-  },
-];
+interface Props {
+  onOpenRewards: () => void;
+  onOpenOrders: () => void;
+}
 
-export function ProfileScreen() {
+export function ProfileScreen({ onOpenRewards, onOpenOrders }: Props) {
   const { user, ready, logout } = useAuth();
+  const [addresses, setAddresses] = useState<ApiAddress[]>([]);
+  const [addressOpen, setAddressOpen] = useState(false);
+  const [recentOrder, setRecentOrder] = useState<Order | null>(null);
+
+  useEffect(() => {
+    if (!ready) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const [addrs, history] = await Promise.all([
+          userApi.addresses().catch(() => []),
+          ordersApi.list('history').catch(() => []),
+        ]);
+        if (cancelled) return;
+        setAddresses(addrs);
+        if (history[0]) setRecentOrder(mapOrder(history[0]));
+      } catch {
+        // ignore
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [ready]);
 
   if (!ready) {
     return (
       <View style={styles.container}>
-        <TopAppBar />
+        <TopAppBar variant="title" title="Cá nhân" />
         <View style={styles.centered}>
           <ActivityIndicator size="large" color={Colors.primary} />
         </View>
@@ -59,47 +73,78 @@ export function ProfileScreen() {
   const tier = user ? formatTierLabel(user.tier) : 'Thành viên';
   const points = user?.points ?? 0;
 
+  const menus = [
+    {
+      icon: 'location-on' as const,
+      title: 'Địa chỉ đã lưu',
+      subtitle: `${addresses.length} địa chỉ`,
+      onPress: () => setAddressOpen(true),
+    },
+    {
+      icon: 'receipt-long' as const,
+      title: 'Đơn hàng',
+      subtitle: 'Theo dõi & lịch sử',
+      onPress: onOpenOrders,
+    },
+    {
+      icon: 'card-giftcard' as const,
+      title: 'Ưu đãi & điểm thưởng',
+      subtitle: `${points.toLocaleString('vi-VN')} điểm`,
+      onPress: onOpenRewards,
+    },
+  ];
+
   return (
     <View style={styles.container}>
-      <TopAppBar />
-
-      <ScrollView
-        style={styles.body}
-        contentContainerStyle={styles.bodyContent}
-        showsVerticalScrollIndicator={false}
-      >
+      <View style={styles.hero}>
+        <TopAppBar variant="title" title="Cá nhân" />
         <View style={styles.profileHeader}>
-          <View style={styles.avatarWrap}>
-            <Image source={{ uri: avatar }} style={styles.avatar} />
-            <TouchableOpacity style={styles.editBtn}>
-              <MaterialIcons name="edit" size={18} color={Colors.white} />
-            </TouchableOpacity>
-          </View>
+          <Image source={{ uri: avatar }} style={styles.avatar} />
           <Text style={styles.name}>{name}</Text>
           <Text style={styles.phone}>{phone}</Text>
         </View>
+      </View>
 
+      <ScrollView contentContainerStyle={styles.bodyContent}>
         <View style={styles.statsGrid}>
           <View style={styles.statCard}>
-            <MaterialIcons name="loyalty" size={24} color={Colors.primary} />
+            <MaterialIcons name="loyalty" size={22} color={Colors.primary} />
             <Text style={styles.statText}>{tier}</Text>
           </View>
           <View style={styles.statCard}>
-            <MaterialIcons name="card-giftcard" size={24} color={Colors.primary} />
+            <MaterialIcons name="stars" size={22} color={Colors.primary} />
             <Text style={styles.statText}>
-              {points.toLocaleString('vi-VN')} Điểm
+              {points.toLocaleString('vi-VN')} điểm
             </Text>
+          </View>
+          <View style={styles.statCard}>
+            <MaterialIcons name="local-shipping" size={22} color={Colors.primary} />
+            <Text style={styles.statText}>{addresses.length} địa chỉ</Text>
           </View>
         </View>
 
-        <View style={styles.menuCard}>
-          <View style={styles.menuHeader}>
-            <Text style={styles.menuHeaderText}>TÀI KHOẢN & TIỆN ÍCH</Text>
+        {recentOrder && (
+          <View style={styles.recentCard}>
+            <Text style={styles.recentTitle}>Đơn gần nhất</Text>
+            <Text style={styles.recentName}>{recentOrder.restaurantName}</Text>
+            <Text style={styles.recentMeta}>
+              {recentOrder.date} · {formatPrice(recentOrder.total)}
+            </Text>
+            <TouchableOpacity style={styles.recentBtn} onPress={onOpenOrders}>
+              <Text style={styles.recentBtnText}>Xem đơn hàng</Text>
+            </TouchableOpacity>
           </View>
-          {MENU_ITEMS.map((item, index) => (
+        )}
+
+        <View style={styles.menuCard}>
+          {menus.map((item, index) => (
             <TouchableOpacity
               key={item.title}
-              style={[styles.menuItem, index < MENU_ITEMS.length - 1 && styles.menuItemBorder]}
+              style={[
+                styles.menuItem,
+                index < menus.length - 1 && styles.menuItemBorder,
+              ]}
+              onPress={item.onPress}
               activeOpacity={0.7}
             >
               <View style={styles.menuIcon}>
@@ -121,112 +166,89 @@ export function ProfileScreen() {
 
         <Text style={styles.version}>Mealnow v2.4.12</Text>
       </ScrollView>
+
+      <Modal visible={addressOpen} transparent animationType="slide">
+        <Pressable style={styles.modalBg} onPress={() => setAddressOpen(false)}>
+          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.sheetTitle}>Địa chỉ đã lưu</Text>
+            {addresses.map((a) => (
+              <View key={a._id} style={styles.addressItem}>
+                <Text style={styles.addressLabel}>{a.label}</Text>
+                <Text style={styles.addressFull}>{a.fullAddress}</Text>
+              </View>
+            ))}
+            {addresses.length === 0 && (
+              <Text style={styles.empty}>Chưa có địa chỉ</Text>
+            )}
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  body: {
-    flex: 1,
-  },
-  bodyContent: {
-    paddingBottom: 32,
-  },
-  profileHeader: {
-    alignItems: 'center',
-    paddingVertical: 24,
-    gap: 8,
-  },
-  avatarWrap: {
-    position: 'relative',
-    marginBottom: 8,
-  },
-  avatar: {
-    width: 96,
-    height: 96,
-    borderRadius: 48,
-    backgroundColor: Colors.surfaceContainerHigh,
-  },
-  editBtn: {
-    position: 'absolute',
-    right: 0,
-    bottom: 0,
+  container: { flex: 1, backgroundColor: Colors.background },
+  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
+  hero: {
     backgroundColor: Colors.primary,
-    width: 32,
-    height: 32,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    paddingBottom: 24,
   },
-  name: {
-    fontSize: 22,
-    fontWeight: '700',
-    color: Colors.onSurface,
+  profileHeader: { alignItems: 'center', gap: 4, marginTop: 4 },
+  avatar: {
+    width: 80,
+    height: 80,
+    borderRadius: 40,
+    borderWidth: 3,
+    borderColor: Colors.white,
+    backgroundColor: Colors.primaryFixed,
   },
-  phone: {
-    fontSize: 14,
-    color: Colors.secondary,
-  },
-  statsGrid: {
-    flexDirection: 'row',
-    paddingHorizontal: 16,
-    gap: 12,
-    marginBottom: 16,
-  },
+  name: { fontSize: 20, fontWeight: '700', color: Colors.white, marginTop: 8 },
+  phone: { fontSize: 13, color: 'rgba(255,255,255,0.85)' },
+  bodyContent: { padding: 16, paddingBottom: 40, gap: 14 },
+  statsGrid: { flexDirection: 'row', gap: 8, marginTop: -8 },
   statCard: {
     flex: 1,
     backgroundColor: Colors.white,
     borderRadius: 12,
-    padding: 16,
+    padding: 12,
     alignItems: 'center',
-    gap: 8,
-    borderWidth: 1,
-    borderColor: Colors.outlineVariant,
+    gap: 6,
   },
   statText: {
-    fontSize: 13,
+    fontSize: 11,
     fontWeight: '600',
     color: Colors.onSurface,
     textAlign: 'center',
   },
-  menuCard: {
-    marginHorizontal: 16,
+  recentCard: {
     backgroundColor: Colors.white,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.outlineVariant,
+    borderRadius: 14,
+    padding: 14,
+    gap: 4,
+  },
+  recentTitle: { fontSize: 12, color: Colors.secondary, fontWeight: '600' },
+  recentName: { fontSize: 15, fontWeight: '700', color: Colors.onSurface },
+  recentMeta: { fontSize: 12, color: Colors.secondary },
+  recentBtn: { marginTop: 8, alignSelf: 'flex-start' },
+  recentBtnText: { color: Colors.primary, fontWeight: '700', fontSize: 13 },
+  menuCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 14,
     overflow: 'hidden',
-  },
-  menuHeader: {
-    paddingHorizontal: 16,
-    paddingVertical: 12,
-    backgroundColor: Colors.surfaceContainerLow,
-  },
-  menuHeaderText: {
-    fontSize: 12,
-    fontWeight: '700',
-    color: Colors.onSurfaceVariant,
-    letterSpacing: 0.8,
   },
   menuItem: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 16,
+    paddingHorizontal: 14,
     paddingVertical: 14,
     gap: 12,
   },
   menuItemBorder: {
     borderBottomWidth: 1,
-    borderBottomColor: Colors.surfaceVariant,
+    borderBottomColor: Colors.outlineVariant,
   },
   menuIcon: {
     width: 40,
@@ -236,41 +258,44 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  menuInfo: {
-    flex: 1,
-  },
-  menuTitle: {
-    fontSize: 15,
-    fontWeight: '600',
-    color: Colors.onSurface,
-  },
-  menuSubtitle: {
-    fontSize: 12,
-    color: Colors.secondary,
-    marginTop: 2,
-  },
+  menuInfo: { flex: 1 },
+  menuTitle: { fontSize: 15, fontWeight: '600', color: Colors.onSurface },
+  menuSubtitle: { fontSize: 12, color: Colors.secondary, marginTop: 2 },
   logoutBtn: {
-    marginTop: 24,
-    marginHorizontal: 16,
+    marginTop: 8,
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     gap: 8,
     paddingVertical: 14,
     borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.errorContainer,
     backgroundColor: Colors.errorContainer,
   },
-  logoutText: {
-    color: Colors.error,
-    fontWeight: '700',
-    fontSize: 15,
-  },
+  logoutText: { color: Colors.error, fontWeight: '700', fontSize: 15 },
   version: {
     textAlign: 'center',
-    marginTop: 16,
     color: Colors.textLight,
     fontSize: 12,
   },
+  modalBg: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
+  },
+  sheet: {
+    backgroundColor: Colors.white,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    maxHeight: '50%',
+  },
+  sheetTitle: { fontSize: 17, fontWeight: '700', marginBottom: 12 },
+  addressItem: {
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.outlineVariant,
+  },
+  addressLabel: { fontWeight: '700', color: Colors.onSurface },
+  addressFull: { fontSize: 13, color: Colors.secondary, marginTop: 2 },
+  empty: { color: Colors.secondary, paddingVertical: 16 },
 });

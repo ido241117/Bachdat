@@ -81,7 +81,7 @@ function mapUiOrderStatus(status: ApiOrderStatus): OrderStatus {
   return 'delivering';
 }
 
-export function mapOrder(o: ApiOrder): Order {
+export function mapOrder(o: ApiOrder & { restaurantId?: string }): Order {
   return {
     id: o._id,
     restaurantName: o.restaurantName,
@@ -92,6 +92,8 @@ export function mapOrder(o: ApiOrder): Order {
     total: o.total,
     status: mapUiOrderStatus(o.status),
     image: o.restaurantImage,
+    apiStatus: o.status,
+    restaurantId: o.restaurantId,
   };
 }
 

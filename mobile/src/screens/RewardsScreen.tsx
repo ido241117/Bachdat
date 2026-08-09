@@ -84,7 +84,7 @@ function VoucherCard({ voucher, onSave }: { voucher: Voucher; onSave: (id: strin
   );
 }
 
-export function RewardsScreen() {
+export function RewardsScreen({ onBack }: { onBack?: () => void }) {
   const { ready } = useAuth();
   const [activeFilter, setActiveFilter] = useState('Tất cả');
   const [savedVouchers, setSavedVouchers] = useState<string[]>([]);
@@ -152,7 +152,11 @@ export function RewardsScreen() {
 
   return (
     <View style={styles.container}>
-      <TopAppBar showMenu />
+      <TopAppBar
+        variant="title"
+        title="Ưu đãi & Điểm thưởng"
+        onBack={onBack}
+      />
 
       {loading ? (
         <View style={styles.centered}>

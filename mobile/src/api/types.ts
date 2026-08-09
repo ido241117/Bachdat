@@ -83,6 +83,7 @@ export type ApiOrderStatus =
 
 export type ApiOrder = {
   _id: string;
+  restaurantId?: string;
   restaurantName: string;
   restaurantImage: string;
   status: ApiOrderStatus;
@@ -93,6 +94,8 @@ export type ApiOrder = {
   total: number;
   createdAt: string;
   paymentMethod?: string;
+  note?: string;
+  trackingSteps?: { key: string; label: string; done: boolean; at?: string }[];
 };
 
 export type ApiVoucher = {

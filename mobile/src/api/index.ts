@@ -41,14 +41,45 @@ export const restaurantApi = {
   getById: (id: string) => api(`/restaurants/${id}`),
 };
 
+export type TrackingStep = {
+  key: string;
+  label: string;
+  done: boolean;
+  at?: string;
+};
+
 export const ordersApi = {
   list: (status: 'active' | 'history') =>
     api<ApiOrder[]>(`/orders?status=${status}`),
+  get: (id: string) => api<ApiOrder>(`/orders/${id}`),
+  tracking: (id: string) =>
+    api<{ orderId: string; status: string; trackingSteps: TrackingStep[] }>(
+      `/orders/${id}/tracking`,
+    ),
   create: (body: Record<string, unknown>) =>
     api<{ order: ApiOrder; pointsEarned: number }>('/orders', {
       method: 'POST',
       body: JSON.stringify(body),
     }),
+  cancel: (id: string) =>
+    api<ApiOrder>(`/orders/${id}/cancel`, { method: 'POST' }),
+  reorder: (id: string) =>
+    api<{
+      cart: {
+        restaurantId: string;
+        restaurantName: string;
+        items: Array<{
+          menuItemId: string;
+          name: string;
+          price: number;
+          quantity: number;
+          options?: string[];
+          note?: string;
+          image?: string;
+        }>;
+      };
+      message: string;
+    }>(`/orders/${id}/reorder`, { method: 'POST' }),
 };
 
 export const rewardsApi = {

@@ -8,24 +8,30 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  TextInput,
+  Modal,
+  Pressable,
 } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Colors } from '../constants/colors';
 import { formatPrice } from '../api/format';
 import { ordersApi, userApi, vouchersApi } from '../api';
-import type { ApiAddress } from '../api/types';
+import type { ApiAddress, ApiVoucher } from '../api/types';
 import { TopAppBar } from '../components/TopAppBar';
 import { useCart } from '../context/CartContext';
 
 interface Props {
-  onBack: () => void;
+  onBrowse?: () => void;
+  onOrderPlaced?: (orderId: string) => void;
+  onBack?: () => void;
 }
 
-export function CheckoutScreen({ onBack }: Props) {
+export function CheckoutScreen({ onBrowse, onOrderPlaced, onBack }: Props) {
   const insets = useSafeAreaInsets();
   const {
     restaurantId,
+    restaurantName,
     items,
     itemCount,
     subtotal,
@@ -36,10 +42,14 @@ export function CheckoutScreen({ onBack }: Props) {
 
   const [payment, setPayment] = useState<'cash' | 'momo'>('cash');
   const [placing, setPlacing] = useState(false);
-  const [placed, setPlaced] = useState(false);
   const [address, setAddress] = useState<ApiAddress | null>(null);
+  const [addresses, setAddresses] = useState<ApiAddress[]>([]);
+  const [addressOpen, setAddressOpen] = useState(false);
   const [discount, setDiscount] = useState(0);
-  const [voucherCode, setVoucherCode] = useState('MEALNOW20');
+  const [voucherCode, setVoucherCode] = useState('');
+  const [vouchers, setVouchers] = useState<ApiVoucher[]>([]);
+  const [voucherOpen, setVoucherOpen] = useState(false);
+  const [note, setNote] = useState('');
 
   const deliveryFee = items.length > 0 ? 15000 : 0;
   const total = Math.max(0, subtotal + deliveryFee - discount);
@@ -48,11 +58,16 @@ export function CheckoutScreen({ onBack }: Props) {
     let cancelled = false;
     (async () => {
       try {
-        const addresses = await userApi.addresses();
+        const [addrs, voucherList] = await Promise.all([
+          userApi.addresses(),
+          vouchersApi.list(),
+        ]);
         if (cancelled) return;
-        setAddress(addresses.find((a) => a.isDefault) || addresses[0] || null);
+        setAddresses(addrs);
+        setAddress(addrs.find((a) => a.isDefault) || addrs[0] || null);
+        setVouchers(voucherList);
       } catch {
-        // keep null address
+        // keep empty
       }
     })();
     return () => {
@@ -63,7 +78,7 @@ export function CheckoutScreen({ onBack }: Props) {
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      if (items.length === 0) {
+      if (items.length === 0 || !voucherCode) {
         setDiscount(0);
         return;
       }
@@ -73,9 +88,7 @@ export function CheckoutScreen({ onBack }: Props) {
           subtotal,
           deliveryFee,
         );
-        if (!cancelled) {
-          setDiscount(result.valid ? result.discount : 0);
-        }
+        if (!cancelled) setDiscount(result.valid ? result.discount : 0);
       } catch {
         if (!cancelled) setDiscount(0);
       }
@@ -93,7 +106,7 @@ export function CheckoutScreen({ onBack }: Props) {
 
     setPlacing(true);
     try {
-      await ordersApi.create({
+      const result = await ordersApi.create({
         restaurantId,
         items: items.map((i) => ({
           menuItemId: i.menuItemId,
@@ -110,12 +123,14 @@ export function CheckoutScreen({ onBack }: Props) {
         },
         paymentMethod: payment,
         voucherCode: discount > 0 ? voucherCode : undefined,
-        note: '',
+        note,
         deliveryFee,
       });
+      const created = result.order as { _id?: string; id?: string };
+      const orderId = String(created._id || created.id || '');
       clear();
-      setPlaced(true);
-      setTimeout(() => setPlaced(false), 2000);
+      if (orderId && onOrderPlaced) onOrderPlaced(orderId);
+      else Alert.alert('Thành công', 'Đã đặt đơn hàng');
     } catch (err) {
       Alert.alert(
         'Đặt đơn thất bại',
@@ -128,7 +143,12 @@ export function CheckoutScreen({ onBack }: Props) {
 
   return (
     <View style={styles.container}>
-      <TopAppBar variant="title" title="Giỏ hàng" onBack={onBack} showLocation />
+      <TopAppBar
+        variant="title"
+        title="Giỏ hàng"
+        subtitle={restaurantName || undefined}
+        onBack={onBack}
+      />
 
       <ScrollView
         style={styles.body}
@@ -138,7 +158,7 @@ export function CheckoutScreen({ onBack }: Props) {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionLabel}>ĐỊA CHỈ GIAO HÀNG</Text>
-            <TouchableOpacity>
+            <TouchableOpacity onPress={() => setAddressOpen(true)}>
               <Text style={styles.changeBtn}>Thay đổi</Text>
             </TouchableOpacity>
           </View>
@@ -151,11 +171,8 @@ export function CheckoutScreen({ onBack }: Props) {
                 {address?.label || 'Chưa có địa chỉ'}
               </Text>
               <Text style={styles.addressText}>
-                {address?.fullAddress || 'Đăng nhập để lấy địa chỉ mặc định'}
+                {address?.fullAddress || 'Thêm địa chỉ trong tài khoản'}
               </Text>
-              {address?.note ? (
-                <Text style={styles.addressNote}>Ghi chú: {address.note}</Text>
-              ) : null}
             </View>
           </View>
         </View>
@@ -166,7 +183,9 @@ export function CheckoutScreen({ onBack }: Props) {
             <View style={styles.emptyCart}>
               <MaterialIcons name="remove-shopping-cart" size={40} color={Colors.textLight} />
               <Text style={styles.emptyCartText}>Giỏ hàng trống</Text>
-              <Text style={styles.emptyCartHint}>Thêm món để tiếp tục đặt hàng</Text>
+              <TouchableOpacity style={styles.browseBtn} onPress={onBrowse}>
+                <Text style={styles.browseBtnText}>Xem quán gần đây</Text>
+              </TouchableOpacity>
             </View>
           ) : (
             <View style={styles.itemsCard}>
@@ -179,9 +198,6 @@ export function CheckoutScreen({ onBack }: Props) {
                   <View style={styles.itemInfo}>
                     <Text style={styles.itemName} numberOfLines={2}>
                       {item.name}
-                    </Text>
-                    <Text style={styles.itemNote}>
-                      {item.options.length ? item.options.join(', ') : 'Không topping'}
                     </Text>
                     <View style={styles.itemBottom}>
                       <Text style={styles.itemPrice}>{formatPrice(item.price)}</Text>
@@ -202,61 +218,50 @@ export function CheckoutScreen({ onBack }: Props) {
                       </View>
                     </View>
                   </View>
-                  <TouchableOpacity
-                    style={styles.deleteBtn}
-                    onPress={() => removeItem(item.menuItemId)}
-                    accessibilityLabel={`Xóa ${item.name}`}
-                  >
+                  <TouchableOpacity onPress={() => removeItem(item.menuItemId)}>
                     <MaterialIcons name="delete-outline" size={22} color={Colors.error} />
                   </TouchableOpacity>
                 </View>
               ))}
             </View>
           )}
-          <TouchableOpacity style={styles.addMoreBtn} onPress={onBack}>
-            <MaterialIcons name="add-circle" size={20} color={Colors.primary} />
-            <Text style={styles.addMoreText}>Thêm món khác</Text>
-          </TouchableOpacity>
+        </View>
+
+        <View style={styles.section}>
+          <Text style={styles.sectionLabel}>GHI CHÚ</Text>
+          <TextInput
+            style={styles.noteInput}
+            placeholder="Ghi chú cho tài xế / quán..."
+            placeholderTextColor={Colors.textLight}
+            value={note}
+            onChangeText={setNote}
+          />
         </View>
 
         <View style={styles.section}>
           <Text style={styles.sectionLabel}>PHƯƠNG THỨC THANH TOÁN</Text>
           <View style={styles.paymentGrid}>
-            <TouchableOpacity
-              style={[styles.paymentCard, payment === 'cash' && styles.paymentActive]}
-              onPress={() => setPayment('cash')}
-            >
-              {payment === 'cash' && (
+            {(['cash', 'momo'] as const).map((method) => (
+              <TouchableOpacity
+                key={method}
+                style={[styles.paymentCard, payment === method && styles.paymentActive]}
+                onPress={() => setPayment(method)}
+              >
                 <MaterialIcons
-                  name="check-circle"
-                  size={18}
+                  name={method === 'cash' ? 'payments' : 'account-balance-wallet'}
+                  size={28}
                   color={Colors.primary}
-                  style={styles.paymentCheck}
                 />
-              )}
-              <MaterialIcons name="payments" size={32} color={Colors.primary} />
-              <Text style={styles.paymentLabel}>Tiền mặt</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={[styles.paymentCard, payment === 'momo' && styles.paymentActive]}
-              onPress={() => setPayment('momo')}
-            >
-              {payment === 'momo' && (
-                <MaterialIcons
-                  name="check-circle"
-                  size={18}
-                  color={Colors.primary}
-                  style={styles.paymentCheck}
-                />
-              )}
-              <MaterialIcons name="account-balance-wallet" size={32} color={Colors.primary} />
-              <Text style={styles.paymentLabel}>MoMo</Text>
-            </TouchableOpacity>
+                <Text style={styles.paymentLabel}>
+                  {method === 'cash' ? 'Tiền mặt' : 'MoMo'}
+                </Text>
+              </TouchableOpacity>
+            ))}
           </View>
         </View>
 
         <View style={styles.summaryCard}>
-          <Text style={styles.sectionLabel}>TÓM TẮT ĐƠN HÀNG</Text>
+          <Text style={styles.sectionLabel}>TÓM TẮT</Text>
           <View style={styles.summaryRow}>
             <Text style={styles.summaryText}>Tạm tính ({itemCount} món)</Text>
             <Text style={styles.summaryText}>{formatPrice(subtotal)}</Text>
@@ -266,10 +271,9 @@ export function CheckoutScreen({ onBack }: Props) {
             <Text style={styles.summaryText}>{formatPrice(deliveryFee)}</Text>
           </View>
           <View style={styles.summaryRow}>
-            <View style={styles.discountRow}>
-              <MaterialIcons name="sell" size={16} color={Colors.primary} />
-              <Text style={styles.discountText}>Giảm giá ({voucherCode})</Text>
-            </View>
+            <Text style={styles.discountText}>
+              Giảm giá {voucherCode ? `(${voucherCode})` : ''}
+            </Text>
             <Text style={styles.discountValue}>-{formatPrice(discount)}</Text>
           </View>
           <View style={styles.totalRow}>
@@ -280,91 +284,107 @@ export function CheckoutScreen({ onBack }: Props) {
       </ScrollView>
 
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
-        <View style={styles.footerTop}>
-          <View>
-            <Text style={styles.footerSub}>Tổng cộng (Đã gồm VAT)</Text>
-            <Text style={styles.footerTotal}>{formatPrice(total)}</Text>
-          </View>
-          <TouchableOpacity
-            style={styles.promoBtn}
-            onPress={() => setVoucherCode('MEALNOW20')}
-          >
-            <MaterialIcons name="confirmation-number" size={20} color={Colors.primary} />
-            <Text style={styles.promoText}>Sửa mã giảm giá</Text>
-          </TouchableOpacity>
-        </View>
         <TouchableOpacity
-          style={[
-            styles.orderBtn,
-            placed && styles.orderBtnSuccess,
-            items.length === 0 && styles.orderBtnDisabled,
-          ]}
+          style={styles.promoBtn}
+          onPress={() => setVoucherOpen(true)}
+        >
+          <MaterialIcons name="confirmation-number" size={20} color={Colors.primary} />
+          <Text style={styles.promoText}>
+            {voucherCode ? `Mã: ${voucherCode}` : 'Chọn mã giảm giá'}
+          </Text>
+        </TouchableOpacity>
+        <TouchableOpacity
+          style={[styles.orderBtn, items.length === 0 && styles.orderBtnDisabled]}
           onPress={handlePlaceOrder}
-          disabled={placing || placed || items.length === 0}
-          activeOpacity={0.9}
+          disabled={placing || items.length === 0}
         >
           {placing ? (
-            <View style={styles.orderBtnContent}>
-              <ActivityIndicator color={Colors.white} />
-              <Text style={styles.orderBtnText}>Đang xử lý...</Text>
-            </View>
-          ) : placed ? (
-            <View style={styles.orderBtnContent}>
-              <MaterialIcons name="check-circle" size={22} color={Colors.white} />
-              <Text style={styles.orderBtnText}>Đã đặt thành công!</Text>
-            </View>
+            <ActivityIndicator color={Colors.white} />
           ) : (
-            <View style={styles.orderBtnContent}>
-              <Text style={styles.orderBtnText}>Đặt đơn</Text>
-              <MaterialIcons name="arrow-forward" size={22} color={Colors.white} />
-            </View>
+            <Text style={styles.orderBtnText}>Đặt hàng ngay · {formatPrice(total)}</Text>
           )}
         </TouchableOpacity>
       </View>
+
+      <Modal visible={addressOpen} transparent animationType="slide">
+        <Pressable style={styles.modalBackdrop} onPress={() => setAddressOpen(false)}>
+          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.sheetTitle}>Chọn địa chỉ</Text>
+            {addresses.map((a) => (
+              <TouchableOpacity
+                key={a._id}
+                style={styles.sheetItem}
+                onPress={() => {
+                  setAddress(a);
+                  setAddressOpen(false);
+                }}
+              >
+                <Text style={styles.sheetItemTitle}>{a.label}</Text>
+                <Text style={styles.sheetItemSub}>{a.fullAddress}</Text>
+              </TouchableOpacity>
+            ))}
+            {addresses.length === 0 && (
+              <Text style={styles.sheetEmpty}>Chưa có địa chỉ đã lưu</Text>
+            )}
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      <Modal visible={voucherOpen} transparent animationType="slide">
+        <Pressable style={styles.modalBackdrop} onPress={() => setVoucherOpen(false)}>
+          <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.sheetTitle}>Mã giảm giá</Text>
+            <TouchableOpacity
+              style={styles.sheetItem}
+              onPress={() => {
+                setVoucherCode('');
+                setVoucherOpen(false);
+              }}
+            >
+              <Text style={styles.sheetItemTitle}>Không dùng mã</Text>
+            </TouchableOpacity>
+            {vouchers.map((v) => (
+              <TouchableOpacity
+                key={v._id}
+                style={styles.sheetItem}
+                onPress={() => {
+                  setVoucherCode(v.code);
+                  setVoucherOpen(false);
+                }}
+              >
+                <Text style={styles.sheetItemTitle}>{v.code}</Text>
+                <Text style={styles.sheetItemSub}>{v.title}</Text>
+              </TouchableOpacity>
+            ))}
+          </Pressable>
+        </Pressable>
+      </Modal>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  body: {
-    flex: 1,
-  },
-  bodyContent: {
-    padding: 16,
-    paddingBottom: 180,
-    gap: 24,
-  },
-  section: {
-    gap: 8,
-  },
+  container: { flex: 1, backgroundColor: Colors.background },
+  body: { flex: 1 },
+  bodyContent: { padding: 16, paddingBottom: 160, gap: 20 },
+  section: { gap: 8 },
   sectionHeader: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'flex-end',
   },
   sectionLabel: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.onSurfaceVariant,
-    letterSpacing: 1,
-    textTransform: 'uppercase',
-  },
-  changeBtn: {
     fontSize: 12,
     fontWeight: '700',
-    color: Colors.primary,
+    color: Colors.onSurfaceVariant,
+    letterSpacing: 0.8,
   },
+  changeBtn: { fontSize: 12, fontWeight: '700', color: Colors.primary },
   addressCard: {
     flexDirection: 'row',
     backgroundColor: Colors.white,
-    padding: 16,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
+    padding: 14,
+    borderRadius: 14,
     gap: 12,
   },
   addressIcon: {
@@ -375,46 +395,28 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  addressInfo: {
-    flex: 1,
-    gap: 2,
-  },
-  addressTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.onSurface,
-  },
-  addressText: {
-    fontSize: 13,
-    color: Colors.onSurfaceVariant,
-    lineHeight: 18,
-  },
-  addressNote: {
-    fontSize: 12,
-    color: Colors.secondary,
-    marginTop: 2,
-  },
+  addressInfo: { flex: 1, gap: 2 },
+  addressTitle: { fontSize: 15, fontWeight: '700', color: Colors.onSurface },
+  addressText: { fontSize: 13, color: Colors.onSurfaceVariant },
   emptyCart: {
     alignItems: 'center',
     paddingVertical: 32,
     gap: 8,
     backgroundColor: Colors.white,
-    borderRadius: 12,
+    borderRadius: 14,
   },
-  emptyCartText: {
-    fontSize: 16,
-    fontWeight: '600',
-    color: Colors.onSurface,
+  emptyCartText: { fontSize: 15, fontWeight: '600', color: Colors.onSurface },
+  browseBtn: {
+    marginTop: 8,
+    backgroundColor: Colors.primaryFixed,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 999,
   },
-  emptyCartHint: {
-    fontSize: 13,
-    color: Colors.textLight,
-  },
+  browseBtnText: { color: Colors.primary, fontWeight: '700' },
   itemsCard: {
     backgroundColor: Colors.white,
-    borderRadius: 12,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
+    borderRadius: 14,
     overflow: 'hidden',
   },
   cartItem: {
@@ -423,44 +425,17 @@ const styles = StyleSheet.create({
     gap: 12,
     alignItems: 'center',
   },
-  cartItemBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.surfaceVariant,
-  },
-  itemImage: {
-    width: 64,
-    height: 64,
-    borderRadius: 8,
-  },
-  itemInfo: {
-    flex: 1,
-    gap: 4,
-  },
-  itemName: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.onSurface,
-  },
-  itemNote: {
-    fontSize: 12,
-    color: Colors.secondary,
-  },
+  cartItemBorder: { borderBottomWidth: 1, borderBottomColor: Colors.outlineVariant },
+  itemImage: { width: 60, height: 60, borderRadius: 8 },
+  itemInfo: { flex: 1, gap: 6 },
+  itemName: { fontSize: 14, fontWeight: '600', color: Colors.onSurface },
   itemBottom: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginTop: 4,
   },
-  itemPrice: {
-    fontSize: 14,
-    fontWeight: '700',
-    color: Colors.primary,
-  },
-  stepper: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
+  itemPrice: { fontSize: 14, fontWeight: '700', color: Colors.primary },
+  stepper: { flexDirection: 'row', alignItems: 'center', gap: 8 },
   stepBtn: {
     width: 28,
     height: 28,
@@ -469,157 +444,87 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
-  stepValue: {
+  stepValue: { fontSize: 14, fontWeight: '600', minWidth: 16, textAlign: 'center' },
+  noteInput: {
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
     fontSize: 14,
-    fontWeight: '600',
-    minWidth: 16,
-    textAlign: 'center',
+    color: Colors.onSurface,
   },
-  deleteBtn: {
-    padding: 4,
-  },
-  addMoreBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 8,
-  },
-  addMoreText: {
-    color: Colors.primary,
-    fontWeight: '600',
-    fontSize: 14,
-  },
-  paymentGrid: {
-    flexDirection: 'row',
-    gap: 12,
-  },
+  paymentGrid: { flexDirection: 'row', gap: 10 },
   paymentCard: {
     flex: 1,
     backgroundColor: Colors.white,
     borderRadius: 12,
     borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
-    padding: 16,
+    borderColor: Colors.outlineVariant,
+    padding: 14,
     alignItems: 'center',
-    gap: 8,
-    position: 'relative',
+    gap: 6,
   },
-  paymentActive: {
-    borderColor: Colors.primary,
-    borderWidth: 2,
-  },
-  paymentCheck: {
-    position: 'absolute',
-    top: 8,
-    right: 8,
-  },
-  paymentLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: Colors.onSurface,
-  },
+  paymentActive: { borderColor: Colors.primary, borderWidth: 2 },
+  paymentLabel: { fontSize: 13, fontWeight: '600' },
   summaryCard: {
     backgroundColor: Colors.white,
-    borderRadius: 12,
-    padding: 16,
+    borderRadius: 14,
+    padding: 14,
     gap: 10,
-    borderWidth: 1,
-    borderColor: Colors.surfaceVariant,
   },
   summaryRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
   },
-  summaryText: {
-    fontSize: 14,
-    color: Colors.onSurfaceVariant,
-  },
-  discountRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  discountText: {
-    fontSize: 14,
-    color: Colors.primary,
-  },
-  discountValue: {
-    fontSize: 14,
-    fontWeight: '600',
-    color: Colors.primary,
-  },
+  summaryText: { fontSize: 14, color: Colors.onSurfaceVariant },
+  discountText: { fontSize: 14, color: Colors.primary },
+  discountValue: { fontSize: 14, fontWeight: '600', color: Colors.primary },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
-    alignItems: 'center',
     borderTopWidth: 1,
-    borderTopColor: Colors.surfaceVariant,
+    borderTopColor: Colors.outlineVariant,
     paddingTop: 10,
-    marginTop: 4,
   },
-  totalLabel: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.onSurface,
-  },
-  totalValue: {
-    fontSize: 18,
-    fontWeight: '700',
-    color: Colors.primary,
-  },
+  totalLabel: { fontSize: 16, fontWeight: '700' },
+  totalValue: { fontSize: 18, fontWeight: '700', color: Colors.primary },
   footer: {
     backgroundColor: Colors.white,
     borderTopWidth: 1,
-    borderTopColor: Colors.surfaceVariant,
+    borderTopColor: Colors.outlineVariant,
     paddingHorizontal: 16,
     paddingTop: 12,
-    gap: 12,
+    gap: 10,
   },
-  footerTop: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  footerSub: {
-    fontSize: 12,
-    color: Colors.secondary,
-  },
-  footerTotal: {
-    fontSize: 20,
-    fontWeight: '700',
-    color: Colors.onSurface,
-  },
-  promoBtn: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  promoText: {
-    fontSize: 12,
-    fontWeight: '600',
-    color: Colors.primary,
-  },
+  promoBtn: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+  promoText: { fontSize: 13, fontWeight: '600', color: Colors.primary },
   orderBtn: {
     backgroundColor: Colors.primary,
-    borderRadius: 12,
+    borderRadius: 14,
     paddingVertical: 14,
     alignItems: 'center',
   },
-  orderBtnSuccess: {
-    backgroundColor: '#2E7D32',
+  orderBtnDisabled: { opacity: 0.5 },
+  orderBtnText: { color: Colors.white, fontSize: 16, fontWeight: '700' },
+  modalBackdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    justifyContent: 'flex-end',
   },
-  orderBtnDisabled: {
-    opacity: 0.5,
+  sheet: {
+    backgroundColor: Colors.white,
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    padding: 20,
+    maxHeight: '60%',
   },
-  orderBtnContent: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  sheetTitle: { fontSize: 17, fontWeight: '700', marginBottom: 12 },
+  sheetItem: {
+    paddingVertical: 12,
+    borderBottomWidth: 1,
+    borderBottomColor: Colors.outlineVariant,
   },
-  orderBtnText: {
-    color: Colors.white,
-    fontSize: 16,
-    fontWeight: '700',
-  },
+  sheetItemTitle: { fontSize: 15, fontWeight: '600', color: Colors.onSurface },
+  sheetItemSub: { fontSize: 12, color: Colors.secondary, marginTop: 2 },
+  sheetEmpty: { color: Colors.secondary, paddingVertical: 20 },
 });

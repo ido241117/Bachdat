@@ -2,7 +2,7 @@
 $ErrorActionPreference = "Stop"
 $mongosh = "C:\Users\ADMIN\AppData\Local\Programs\mongosh\mongosh.exe"
 $uri = "mongodb://localhost:27017/mealnow"
-$dumpDir = Join-Path $PSScriptRoot "quickbite"
+$dumpDir = Join-Path $PSScriptRoot "mealnow"
 
 if (-not (Test-Path $mongosh)) {
     throw "mongosh not found at $mongosh"

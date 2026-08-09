@@ -1,150 +1,160 @@
-import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
+import {
+  View,
+  Text,
+  TouchableOpacity,
+  StyleSheet,
+  Image,
+} from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../constants/colors';
 
-type Variant = 'brand' | 'title' | 'location';
+type Variant = 'brand' | 'title' | 'location' | 'orange';
 
 interface Props {
   variant?: Variant;
   title?: string;
+  subtitle?: string;
+  addressLabel?: string;
   onBack?: () => void;
   onCartPress?: () => void;
-  showMenu?: boolean;
+  onBellPress?: () => void;
   showCart?: boolean;
-  showLocation?: boolean;
 }
 
 export function TopAppBar({
   variant = 'brand',
   title,
+  subtitle,
+  addressLabel = 'Quận 1, TP. Hồ Chí Minh',
   onBack,
   onCartPress,
-  showMenu = false,
-  showCart = true,
-  showLocation = false,
+  onBellPress,
+  showCart = false,
 }: Props) {
-  if (variant === 'location') {
+  if (variant === 'location' || variant === 'orange' || variant === 'brand') {
     return (
-      <SafeAreaView edges={['top']} style={styles.header}>
-        <View style={styles.locationRow}>
-          <MaterialIcons name="location-on" size={22} color={Colors.primary} />
-          <View style={styles.locationText}>
-            <Text style={styles.locationLabel}>Giao đến</Text>
-            <Text style={styles.locationValue}>Quận 1, TP. Hồ Chí Minh</Text>
+      <SafeAreaView edges={['top']} style={styles.orangeHeader}>
+        <View style={styles.orangeRow}>
+          <View style={styles.brandBlock}>
+            <Image
+              source={require('../../assets/mealnow_logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+            <View style={styles.locationBlock}>
+              <Text style={styles.deliverLabel}>Giao đến</Text>
+              <View style={styles.addressRow}>
+                <MaterialIcons name="location-on" size={14} color={Colors.white} />
+                <Text style={styles.addressText} numberOfLines={1}>
+                  {addressLabel}
+                </Text>
+              </View>
+            </View>
+          </View>
+          <View style={styles.orangeActions}>
+            {onBellPress && (
+              <TouchableOpacity style={styles.orangeIcon} onPress={onBellPress}>
+                <MaterialIcons name="notifications-none" size={22} color={Colors.white} />
+              </TouchableOpacity>
+            )}
+            {showCart && (
+              <TouchableOpacity style={styles.orangeIcon} onPress={onCartPress}>
+                <MaterialIcons name="shopping-cart" size={22} color={Colors.white} />
+              </TouchableOpacity>
+            )}
           </View>
         </View>
-        {showCart && (
-          <TouchableOpacity style={styles.iconBtn} onPress={onCartPress}>
-            <MaterialIcons name="shopping-cart" size={24} color={Colors.primary} />
-          </TouchableOpacity>
-        )}
-      </SafeAreaView>
-    );
-  }
-
-  if (variant === 'title') {
-    return (
-      <SafeAreaView edges={['top']} style={styles.header}>
-        <View style={styles.titleLeft}>
-          {onBack && (
-            <TouchableOpacity style={styles.iconBtn} onPress={onBack}>
-              <MaterialIcons name="arrow-back" size={24} color={Colors.primary} />
-            </TouchableOpacity>
-          )}
-          <Text style={styles.titleText}>{title}</Text>
-        </View>
-        {showLocation && (
-          <TouchableOpacity style={styles.iconBtn}>
-            <MaterialIcons name="location-on" size={24} color={Colors.primary} />
-          </TouchableOpacity>
-        )}
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView edges={['top']} style={styles.header}>
-      <View style={styles.brandLeft}>
-        {showMenu && (
-          <TouchableOpacity style={styles.iconBtn}>
-            <MaterialIcons name="menu" size={24} color={Colors.primary} />
-          </TouchableOpacity>
-        )}
+    <SafeAreaView edges={['top']} style={styles.orangeHeader}>
+      <View style={styles.titleRow}>
         {onBack && (
-          <TouchableOpacity style={styles.iconBtn} onPress={onBack}>
-            <MaterialIcons name="arrow-back" size={24} color={Colors.primary} />
+          <TouchableOpacity style={styles.orangeIcon} onPress={onBack}>
+            <MaterialIcons name="arrow-back" size={22} color={Colors.white} />
           </TouchableOpacity>
         )}
-        <Text style={styles.brandText}>Mealnow</Text>
+        <View style={styles.titleBlock}>
+          <Text style={styles.titleText}>{title}</Text>
+          {subtitle ? <Text style={styles.subtitleText}>{subtitle}</Text> : null}
+        </View>
       </View>
-      {showCart && (
-        <TouchableOpacity style={styles.iconBtn} onPress={onCartPress}>
-          <MaterialIcons name="shopping-bag" size={24} color={Colors.primary} />
-        </TouchableOpacity>
-      )}
     </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  header: {
-    backgroundColor: Colors.surface,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.surfaceVariant,
+  orangeHeader: {
+    backgroundColor: Colors.primary,
+    borderBottomLeftRadius: 24,
+    borderBottomRightRadius: 24,
+    paddingHorizontal: 16,
+    paddingBottom: 14,
+  },
+  orangeRow: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
-    paddingHorizontal: 16,
-    paddingBottom: 8,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 1 },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
   },
-  brandLeft: {
+  brandBlock: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 8,
-  },
-  brandText: {
-    fontSize: 24,
-    fontWeight: '700',
-    color: Colors.primary,
-    letterSpacing: -0.3,
-  },
-  titleLeft: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  titleText: {
-    fontSize: 18,
-    fontWeight: '600',
-    color: Colors.onSurface,
-  },
-  locationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+    gap: 10,
     flex: 1,
   },
-  locationText: {
+  logo: {
+    width: 36,
+    height: 36,
+    borderRadius: 8,
+    backgroundColor: 'rgba(255,255,255,0.2)',
+  },
+  locationBlock: {
     flex: 1,
   },
-  locationLabel: {
-    fontSize: 14,
-    color: Colors.onSurfaceVariant,
-    fontWeight: '600',
+  deliverLabel: {
+    color: 'rgba(255,255,255,0.8)',
+    fontSize: 11,
+    fontWeight: '500',
   },
-  locationValue: {
-    fontSize: 14,
+  addressRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 2,
+  },
+  addressText: {
+    color: Colors.white,
+    fontSize: 13,
     fontWeight: '700',
-    color: Colors.onSurface,
+    flexShrink: 1,
   },
-  iconBtn: {
+  orangeActions: {
+    flexDirection: 'row',
+    gap: 4,
+  },
+  orangeIcon: {
     padding: 8,
     borderRadius: 999,
+    backgroundColor: 'rgba(255,255,255,0.15)',
+  },
+  titleRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  titleBlock: {
+    flex: 1,
+  },
+  titleText: {
+    color: Colors.white,
+    fontSize: 17,
+    fontWeight: '700',
+  },
+  subtitleText: {
+    color: 'rgba(255,255,255,0.75)',
+    fontSize: 12,
+    marginTop: 2,
   },
 });

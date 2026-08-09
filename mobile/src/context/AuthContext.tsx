@@ -12,8 +12,8 @@ import { authApi } from '../api';
 import { setToken } from '../api/client';
 import type { ApiUser } from '../api/types';
 
-const TOKEN_KEY = 'qb_token';
-const USER_KEY = 'qb_user';
+const TOKEN_KEY = 'mealnow_token';
+const USER_KEY = 'mealnow_user';
 const DEMO_PHONE = '0901234567';
 const DEMO_OTP = '123456';
 

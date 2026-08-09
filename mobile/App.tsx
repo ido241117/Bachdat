@@ -1,8 +1,10 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { View, StyleSheet, ActivityIndicator } from 'react-native';
 import {
   NavigationContainer,
   useNavigation,
+  useRoute,
+  type RouteProp,
 } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
@@ -16,19 +18,21 @@ import { RewardsScreen } from './src/screens/RewardsScreen';
 import { ProfileScreen } from './src/screens/ProfileScreen';
 import { RestaurantDetailScreen } from './src/screens/RestaurantDetailScreen';
 import { CheckoutScreen } from './src/screens/CheckoutScreen';
+import { TrackingScreen } from './src/screens/TrackingScreen';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { CartProvider } from './src/context/CartContext';
 
 export type RootStackParamList = {
-  Main: undefined;
+  Main: { tab?: TabKey } | undefined;
   RestaurantDetail: { restaurant: Restaurant };
-  Checkout: undefined;
+  Tracking: { orderId: string };
+  Rewards: undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
-function HomeTabContent() {
+function HomeTabContent({ onGoCart }: { onGoCart: () => void }) {
   const navigation = useNavigation<Nav>();
 
   return (
@@ -36,24 +40,52 @@ function HomeTabContent() {
       onRestaurantPress={(restaurant) =>
         navigation.navigate('RestaurantDetail', { restaurant })
       }
-      onCheckoutPress={() => navigation.navigate('Checkout')}
+      onCheckoutPress={onGoCart}
     />
   );
 }
 
 function MainTabs() {
-  const [activeTab, setActiveTab] = useState<TabKey>('home');
+  const navigation = useNavigation<Nav>();
+  const route = useRoute<RouteProp<RootStackParamList, 'Main'>>();
+  const [activeTab, setActiveTab] = useState<TabKey>(
+    route.params?.tab || 'home',
+  );
+
+  useEffect(() => {
+    if (route.params?.tab) setActiveTab(route.params.tab);
+  }, [route.params?.tab]);
+
+  const goCart = () => setActiveTab('cart');
+  const goOrders = () => setActiveTab('orders');
 
   const renderScreen = () => {
     switch (activeTab) {
       case 'home':
-        return <HomeTabContent />;
+        return <HomeTabContent onGoCart={goCart} />;
+      case 'cart':
+        return (
+          <CheckoutScreen
+            onOrderPlaced={(orderId) =>
+              navigation.navigate('Tracking', { orderId })
+            }
+            onBrowse={() => setActiveTab('home')}
+          />
+        );
       case 'orders':
-        return <OrdersScreen />;
-      case 'rewards':
-        return <RewardsScreen />;
+        return (
+          <OrdersScreen
+            onTrack={(orderId) => navigation.navigate('Tracking', { orderId })}
+            onGoCart={goCart}
+          />
+        );
       case 'profile':
-        return <ProfileScreen />;
+        return (
+          <ProfileScreen
+            onOpenRewards={() => navigation.navigate('Rewards')}
+            onOpenOrders={goOrders}
+          />
+        );
     }
   };
 
@@ -76,15 +108,29 @@ function RestaurantDetailWrapper({
     <RestaurantDetailScreen
       restaurant={route.params.restaurant}
       onBack={() => navigation.goBack()}
-      onCheckoutPress={() => navigation.navigate('Checkout')}
+      onCheckoutPress={() => navigation.navigate('Main', { tab: 'cart' })}
     />
   );
 }
 
-function CheckoutWrapper() {
+function TrackingWrapper({
+  route,
+}: {
+  route: { params: { orderId: string } };
+}) {
   const navigation = useNavigation<Nav>();
+  return (
+    <TrackingScreen
+      orderId={route.params.orderId}
+      onBack={() => navigation.goBack()}
+      onGoOrders={() => navigation.navigate('Main', { tab: 'orders' })}
+    />
+  );
+}
 
-  return <CheckoutScreen onBack={() => navigation.goBack()} />;
+function RewardsWrapper() {
+  const navigation = useNavigation<Nav>();
+  return <RewardsScreen onBack={() => navigation.goBack()} />;
 }
 
 function RootNavigator() {
@@ -102,7 +148,8 @@ function RootNavigator() {
     <Stack.Navigator screenOptions={{ headerShown: false }}>
       <Stack.Screen name="Main" component={MainTabs} />
       <Stack.Screen name="RestaurantDetail" component={RestaurantDetailWrapper} />
-      <Stack.Screen name="Checkout" component={CheckoutWrapper} />
+      <Stack.Screen name="Tracking" component={TrackingWrapper} />
+      <Stack.Screen name="Rewards" component={RewardsWrapper} />
     </Stack.Navigator>
   );
 }
@@ -112,7 +159,7 @@ export default function App() {
     <AuthProvider>
       <CartProvider>
         <NavigationContainer>
-          <StatusBar style="dark" />
+          <StatusBar style="light" />
           <RootNavigator />
         </NavigationContainer>
       </CartProvider>

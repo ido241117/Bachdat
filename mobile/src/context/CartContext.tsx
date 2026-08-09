@@ -24,9 +24,15 @@ type CartContextValue = {
   items: CartLine[];
   itemCount: number;
   subtotal: number;
+  wouldSwitchRestaurant: (nextRestaurantId: string) => boolean;
   addItem: (restaurantId: string, restaurantName: string, item: MenuItem) => void;
   updateQty: (menuItemId: string, delta: number) => void;
   removeItem: (menuItemId: string) => void;
+  replaceCart: (
+    restaurantId: string,
+    restaurantName: string,
+    lines: CartLine[],
+  ) => void;
   clear: () => void;
 };
 
@@ -42,6 +48,27 @@ export function CartProvider({ children }: { children: ReactNode }) {
     setRestaurantName(null);
     setItems([]);
   }, []);
+
+  const wouldSwitchRestaurant = useCallback(
+    (nextRestaurantId: string) =>
+      restaurantId != null &&
+      restaurantId !== nextRestaurantId &&
+      items.length > 0,
+    [restaurantId, items.length],
+  );
+
+  const replaceCart = useCallback(
+    (
+      nextRestaurantId: string,
+      nextRestaurantName: string,
+      lines: CartLine[],
+    ) => {
+      setRestaurantId(nextRestaurantId);
+      setRestaurantName(nextRestaurantName);
+      setItems(lines);
+    },
+    [],
+  );
 
   const addItem = useCallback(
     (nextRestaurantId: string, nextRestaurantName: string, item: MenuItem) => {
@@ -107,9 +134,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       items,
       itemCount,
       subtotal,
+      wouldSwitchRestaurant,
       addItem,
       updateQty,
       removeItem,
+      replaceCart,
       clear,
     }),
     [
@@ -118,9 +147,11 @@ export function CartProvider({ children }: { children: ReactNode }) {
       items,
       itemCount,
       subtotal,
+      wouldSwitchRestaurant,
       addItem,
       updateQty,
       removeItem,
+      replaceCart,
       clear,
     ],
   );
