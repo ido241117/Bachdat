@@ -366,6 +366,7 @@ async function seed() {
     avatar: "",
     tier: "gold",
     points: 2450,
+    role: "user",
     referralCode: "QB4567MINH",
     addresses: [
       {
@@ -393,6 +394,18 @@ async function seed() {
     ],
     savedVoucherIds: [vouchers[0]._id, vouchers[1]._id],
   });
+
+  await User.create({
+    phone: "0909999999",
+    name: "Admin Mealnow",
+    avatar: "",
+    tier: "diamond",
+    points: 0,
+    role: "admin",
+    referralCode: "ADMINMEALNOW",
+  });
+
+  console.log("Admin login → phone 0909999999 / OTP 123456");
 
   const pho = await MenuItem.findOne({
     restaurantId: bepViet._id,

@@ -39,6 +39,12 @@ const userSchema = new Schema(
     },
     points: { type: Number, default: 0 },
     referralCode: { type: String, unique: true, sparse: true },
+    role: {
+      type: String,
+      enum: ["user", "admin"],
+      default: "user",
+      index: true,
+    },
     addresses: { type: [addressSchema], default: [] },
     paymentMethods: { type: [paymentMethodSchema], default: [] },
     notificationSettings: {

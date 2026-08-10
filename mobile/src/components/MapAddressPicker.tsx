@@ -13,13 +13,13 @@ import {
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import * as Location from 'expo-location';
 import { Colors } from '../constants/colors';
 import {
   goongApi,
   type GoongLatLng,
   type GoongPrediction,
 } from '../api/goong';
+import { getFreshLatLng, getQuickLatLng } from '../api/location';
 import type { PickedAddress } from './AddressSearchModal';
 
 type Suggestion = PickedAddress & { id: string };
@@ -190,7 +190,9 @@ export function MapAddressPicker({
 
   const active = asModal ? visible : true;
   const start = resolvedStart ?? initial ?? DEFAULT;
-  const startKey = `${start.lat.toFixed(5)},${start.lng.toFixed(5)}`;
+  // Chỉ remount map 1 lần mỗi lần mở — GPS tinh chỉnh bằng flyTo
+  const [mapMountKey, setMapMountKey] = useState(() => `picker-${Date.now()}`);
+  const [mapCenter, setMapCenter] = useState(initial ?? DEFAULT);
 
   const applySuggestions = useCallback(async (lat: number, lng: number, seq: number) => {
     setLoadingAddr(true);
@@ -241,36 +243,53 @@ export function MapAddressPicker({
     setQuery('');
     setPredictions([]);
     setMoving(false);
-    setBootstrapping(true);
-    setResolvedStart(null);
+
+    const seed = initial ?? DEFAULT;
+    setMapMountKey(`picker-${Date.now()}`);
+    setMapCenter(seed);
+    setCenter(seed);
+    setResolvedStart(seed);
+    setBootstrapping(false);
+    const seedSeq = ++reverseSeq.current;
+    void applySuggestions(seed.lat, seed.lng, seedSeq);
+
+    if (!autoLocate) return;
 
     (async () => {
-      let next = initial ?? DEFAULT;
-      try {
-        if (autoLocate) {
-          const { status } = await Location.requestForegroundPermissionsAsync();
-          if (status === 'granted') {
-            const pos = await Location.getCurrentPositionAsync({
-              accuracy: Location.Accuracy.Balanced,
-            });
-            next = {
-              lat: pos.coords.latitude,
-              lng: pos.coords.longitude,
-            };
-            if (!cancelled) setUserLoc(next);
-          }
-        }
-      } catch {
-        // giữ initial / DEFAULT
-      }
+      const quick = await getQuickLatLng();
+      if (cancelled || !quick) return;
 
-      if (cancelled) return;
-      setCenter(next);
-      setResolvedStart(next);
-      setBootstrapping(false);
-
+      setUserLoc(quick);
+      setCenter(quick);
+      setResolvedStart(quick);
+      webRef.current?.injectJavaScript(
+        `window.setUserLocation && window.setUserLocation(${quick.lng}, ${quick.lat}); window.flyTo && window.flyTo(${quick.lng}, ${quick.lat}, 16); true;`,
+      );
       const seq = ++reverseSeq.current;
-      await applySuggestions(next.lat, next.lng, seq);
+      void applySuggestions(quick.lat, quick.lng, seq);
+
+      const fresh = await getFreshLatLng();
+      if (cancelled || !fresh) return;
+      const dLat = (fresh.lat - quick.lat) * 111_320;
+      const dLng =
+        (fresh.lng - quick.lng) *
+        111_320 *
+        Math.cos((fresh.lat * Math.PI) / 180);
+      if (Math.hypot(dLat, dLng) < 25) {
+        setUserLoc(fresh);
+        webRef.current?.injectJavaScript(
+          `window.setUserLocation && window.setUserLocation(${fresh.lng}, ${fresh.lat}); true;`,
+        );
+        return;
+      }
+      setUserLoc(fresh);
+      setCenter(fresh);
+      setResolvedStart(fresh);
+      webRef.current?.injectJavaScript(
+        `window.setUserLocation && window.setUserLocation(${fresh.lng}, ${fresh.lat}); window.flyTo && window.flyTo(${fresh.lng}, ${fresh.lat}, 16); true;`,
+      );
+      const seq2 = ++reverseSeq.current;
+      void applySuggestions(fresh.lat, fresh.lng, seq2);
     })();
 
     return () => {
@@ -279,9 +298,8 @@ export function MapAddressPicker({
   }, [active, autoLocate, initialKey, applySuggestions]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const html = useMemo(
-    () => buildPickerHtml(mapsKey, start, 16, userLoc),
-    // remount map theo vị trí GPS đã resolve (không theo userLoc muộn)
-    [mapsKey, startKey], // eslint-disable-line react-hooks/exhaustive-deps
+    () => buildPickerHtml(mapsKey, mapCenter, 16, null),
+    [mapsKey, mapMountKey], // eslint-disable-line react-hooks/exhaustive-deps
   );
 
   useEffect(() => {
@@ -430,12 +448,8 @@ export function MapAddressPicker({
   const recenter = async () => {
     setLocating(true);
     try {
-      const { status } = await Location.requestForegroundPermissionsAsync();
-      if (status !== 'granted') return;
-      const pos = await Location.getCurrentPositionAsync({
-        accuracy: Location.Accuracy.Balanced,
-      });
-      const next = { lat: pos.coords.latitude, lng: pos.coords.longitude };
+      const next = (await getQuickLatLng()) || (await getFreshLatLng());
+      if (!next) return;
       setUserLoc(next);
       webRef.current?.injectJavaScript(
         `window.setUserLocation && window.setUserLocation(${next.lng}, ${next.lat}); true;`,
@@ -519,7 +533,7 @@ export function MapAddressPicker({
       >
         {mapsKey && layoutReady && resolvedStart && !bootstrapping ? (
           <WebView
-            key={`picker-${startKey}`}
+            key={mapMountKey}
             ref={webRef}
             originWhitelist={['*']}
             source={{ html }}
@@ -532,9 +546,7 @@ export function MapAddressPicker({
         ) : (
           <View style={styles.mapFallback}>
             <ActivityIndicator color={Colors.primary} />
-            <Text style={styles.bootText}>
-              {bootstrapping ? 'Đang lấy vị trí của bạn...' : 'Đang tải bản đồ...'}
-            </Text>
+            <Text style={styles.bootText}>Đang tải bản đồ...</Text>
           </View>
         )}
 

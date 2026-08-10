@@ -13,6 +13,7 @@ import cartRoutes from "./routes/cart";
 import orderRoutes from "./routes/orders";
 import voucherRoutes from "./routes/vouchers";
 import rewardRoutes from "./routes/rewards";
+import adminRoutes from "./routes/admin";
 
 async function main() {
   await connectDB();
@@ -46,6 +47,7 @@ async function main() {
   app.use("/orders", orderRoutes);
   app.use("/vouchers", voucherRoutes);
   app.use("/rewards", rewardRoutes);
+  app.use("/admin", adminRoutes);
 
   app.use(errorHandler);
 

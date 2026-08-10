@@ -51,6 +51,19 @@ export async function optionalAuth(
   next();
 }
 
+export async function requireAdmin(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+) {
+  await requireAuth(req, res, () => {
+    if (req.user?.role !== "admin") {
+      return res.status(403).json({ error: "Forbidden — cần quyền admin" });
+    }
+    next();
+  });
+}
+
 export function errorHandler(
   err: unknown,
   _req: Request,

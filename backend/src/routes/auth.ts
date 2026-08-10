@@ -53,6 +53,7 @@ router.post("/login", async (req, res) => {
       tier: user.tier,
       points: user.points,
       referralCode: user.referralCode,
+      role: user.role || "user",
     },
   });
 });

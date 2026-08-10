@@ -8,7 +8,7 @@ import {
   type ReactNode,
 } from 'react';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as Location from 'expo-location';
+import { getQuickLatLng, getFreshLatLng } from '../api/location';
 import { userApi } from '../api';
 import { goongApi } from '../api/goong';
 import { useAuth } from './AuthContext';
@@ -36,13 +36,9 @@ const DeliveryLocationContext =
 
 async function locateFromGps(): Promise<DeliveryLocation | null> {
   try {
-    const { status } = await Location.requestForegroundPermissionsAsync();
-    if (status !== 'granted') return null;
-    const pos = await Location.getCurrentPositionAsync({
-      accuracy: Location.Accuracy.Balanced,
-    });
-    const lat = pos.coords.latitude;
-    const lng = pos.coords.longitude;
+    const quick = (await getQuickLatLng()) || (await getFreshLatLng());
+    if (!quick) return null;
+    const { lat, lng } = quick;
     try {
       const geo = await goongApi.reverseGeocode(lat, lng);
       return {

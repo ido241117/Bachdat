@@ -44,3 +44,19 @@ npx expo start -c
 ```
 
 Goong: `EXPO_PUBLIC_GOONG_MAPS_KEY` (map tiles) + `EXPO_PUBLIC_GOONG_API_KEY` (Places/Directions).
+
+## 4. Admin dashboard (web)
+```
+cd admin
+npm install   # lần đầu
+npm run dev
+```
+Mở http://localhost:5173
+
+Login admin (sau `npm run seed` ở backend):
+- SĐT: `0909999999`
+- OTP: `123456`
+
+API admin: `http://localhost:8787/admin/*` (cần Bearer token role=admin)
+
+Có thể trỏ `admin/.env` → `VITE_API_URL=https://bachdat.site` nếu dùng tunnel.
