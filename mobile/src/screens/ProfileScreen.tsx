@@ -26,15 +26,21 @@ interface Props {
   onOpenRewards: () => void;
   onOpenOrders: () => void;
   onOpenAddresses: () => void;
+  onLogin?: () => void;
 }
 
-export function ProfileScreen({ onOpenRewards, onOpenOrders, onOpenAddresses }: Props) {
+export function ProfileScreen({
+  onOpenRewards,
+  onOpenOrders,
+  onOpenAddresses,
+  onLogin,
+}: Props) {
   const { user, ready, logout } = useAuth();
   const [addresses, setAddresses] = useState<ApiAddress[]>([]);
   const [recentOrder, setRecentOrder] = useState<Order | null>(null);
 
   useEffect(() => {
-    if (!ready) return;
+    if (!ready || !user) return;
     let cancelled = false;
     (async () => {
       try {
@@ -52,7 +58,7 @@ export function ProfileScreen({ onOpenRewards, onOpenOrders, onOpenAddresses }: 
     return () => {
       cancelled = true;
     };
-  }, [ready]);
+  }, [ready, user?.id]);
 
   if (!ready) {
     return (
@@ -65,17 +71,51 @@ export function ProfileScreen({ onOpenRewards, onOpenOrders, onOpenAddresses }: 
     );
   }
 
-  const name = user?.name || 'Khách';
-  const phone = user?.phone || '';
-  const avatar = user?.avatar || FALLBACK_AVATAR;
-  const tier = user ? formatTierLabel(user.tier) : 'Thành viên';
-  const points = user?.points ?? 0;
+  if (!user) {
+    return (
+      <View style={styles.container}>
+        <View style={styles.hero}>
+          <TopAppBar variant="title" title="Cá nhân" />
+          <View style={styles.profileHeader}>
+            <View style={[styles.avatar, styles.guestAvatar]}>
+              <MaterialIcons name="person" size={40} color={Colors.white} />
+            </View>
+            <Text style={styles.name}>Khách</Text>
+            <Text style={styles.phone}>Đăng nhập để lưu địa chỉ & đơn hàng</Text>
+          </View>
+        </View>
+        <View style={styles.guestActions}>
+          <TouchableOpacity style={styles.loginPrimary} onPress={onLogin}>
+            <Text style={styles.loginPrimaryText}>Đăng nhập / Đăng ký</Text>
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.menuCard} onPress={onOpenAddresses}>
+            <View style={styles.menuItem}>
+              <View style={styles.menuIcon}>
+                <MaterialIcons name="location-on" size={22} color={Colors.primary} />
+              </View>
+              <View style={styles.menuInfo}>
+                <Text style={styles.menuTitle}>Chọn địa chỉ giao hàng</Text>
+                <Text style={styles.menuSubtitle}>Dùng map như ShopeeFood</Text>
+              </View>
+              <MaterialIcons name="chevron-right" size={22} color={Colors.secondary} />
+            </View>
+          </TouchableOpacity>
+        </View>
+      </View>
+    );
+  }
+
+  const name = user.name || 'Khách';
+  const phone = user.phone || '';
+  const avatar = user.avatar || FALLBACK_AVATAR;
+  const tier = formatTierLabel(user.tier);
+  const points = user.points ?? 0;
 
   const menus = [
     {
       icon: 'location-on' as const,
-      title: 'Địa chỉ đã lưu',
-      subtitle: `${addresses.length} địa chỉ`,
+      title: 'Địa chỉ giao hàng',
+      subtitle: `${addresses.length} địa chỉ đã lưu`,
       onPress: onOpenAddresses,
     },
     {
@@ -185,6 +225,26 @@ const styles = StyleSheet.create({
     borderWidth: 3,
     borderColor: Colors.white,
     backgroundColor: Colors.primaryFixed,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  guestAvatar: {
+    backgroundColor: 'rgba(255,255,255,0.25)',
+  },
+  guestActions: {
+    padding: 16,
+    gap: 14,
+  },
+  loginPrimary: {
+    backgroundColor: Colors.primary,
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: 'center',
+  },
+  loginPrimaryText: {
+    color: Colors.white,
+    fontWeight: '700',
+    fontSize: 15,
   },
   name: { fontSize: 20, fontWeight: '700', color: Colors.white, marginTop: 8 },
   phone: { fontSize: 13, color: 'rgba(255,255,255,0.85)' },

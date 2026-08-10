@@ -21,8 +21,10 @@ import { CheckoutScreen } from './src/screens/CheckoutScreen';
 import { TrackingScreen } from './src/screens/TrackingScreen';
 import { LoginScreen } from './src/screens/LoginScreen';
 import { AddressesScreen } from './src/screens/AddressesScreen';
+import { SelectAddressScreen } from './src/screens/SelectAddressScreen';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { CartProvider } from './src/context/CartContext';
+import { DeliveryLocationProvider } from './src/context/DeliveryLocationContext';
 
 export type RootStackParamList = {
   Main: { tab?: TabKey } | undefined;
@@ -31,13 +33,21 @@ export type RootStackParamList = {
   Rewards: undefined;
   Login: undefined;
   Addresses: undefined;
+  SelectAddress: { saveToAccount?: boolean } | undefined;
 };
 
 const Stack = createNativeStackNavigator<RootStackParamList>();
 type Nav = NativeStackNavigationProp<RootStackParamList>;
 
-function HomeTabContent({ onGoCart }: { onGoCart: () => void }) {
+function HomeTabContent({
+  onGoCart,
+  onNeedLogin,
+}: {
+  onGoCart: () => void;
+  onNeedLogin: () => void;
+}) {
   const navigation = useNavigation<Nav>();
+  const { user } = useAuth();
 
   return (
     <HomeScreen
@@ -45,6 +55,11 @@ function HomeTabContent({ onGoCart }: { onGoCart: () => void }) {
         navigation.navigate('RestaurantDetail', { restaurant })
       }
       onCheckoutPress={onGoCart}
+      onAddressPress={() => {
+        if (user) navigation.navigate('Addresses');
+        else navigation.navigate('SelectAddress');
+      }}
+      onNeedLogin={onNeedLogin}
     />
   );
 }
@@ -52,6 +67,7 @@ function HomeTabContent({ onGoCart }: { onGoCart: () => void }) {
 function MainTabs() {
   const navigation = useNavigation<Nav>();
   const route = useRoute<RouteProp<RootStackParamList, 'Main'>>();
+  const { user } = useAuth();
   const [activeTab, setActiveTab] = useState<TabKey>(
     route.params?.tab || 'home',
   );
@@ -60,13 +76,34 @@ function MainTabs() {
     if (route.params?.tab) setActiveTab(route.params.tab);
   }, [route.params?.tab]);
 
-  const goCart = () => setActiveTab('cart');
-  const goOrders = () => setActiveTab('orders');
+  const goCart = () => {
+    if (!user) {
+      navigation.navigate('Login');
+      return;
+    }
+    setActiveTab('cart');
+  };
+  const goOrders = () => {
+    if (!user) {
+      navigation.navigate('Login');
+      return;
+    }
+    setActiveTab('orders');
+  };
+  const needLogin = () => navigation.navigate('Login');
+
+  const onTabPress = (tab: TabKey) => {
+    if (!user && (tab === 'cart' || tab === 'orders')) {
+      navigation.navigate('Login');
+      return;
+    }
+    setActiveTab(tab);
+  };
 
   const renderScreen = () => {
     switch (activeTab) {
       case 'home':
-        return <HomeTabContent onGoCart={goCart} />;
+        return <HomeTabContent onGoCart={goCart} onNeedLogin={needLogin} />;
       case 'cart':
         return (
           <CheckoutScreen
@@ -74,6 +111,10 @@ function MainTabs() {
               navigation.navigate('Tracking', { orderId })
             }
             onBrowse={() => setActiveTab('home')}
+            onOpenAddresses={() => navigation.navigate('Addresses')}
+            onOpenMapPicker={() =>
+              navigation.navigate('SelectAddress', { saveToAccount: true })
+            }
           />
         );
       case 'orders':
@@ -86,9 +127,22 @@ function MainTabs() {
       case 'profile':
         return (
           <ProfileScreen
-            onOpenRewards={() => navigation.navigate('Rewards')}
+            onOpenRewards={() => {
+              if (!user) {
+                navigation.navigate('Login');
+                return;
+              }
+              navigation.navigate('Rewards');
+            }}
             onOpenOrders={goOrders}
-            onOpenAddresses={() => navigation.navigate('Addresses')}
+            onOpenAddresses={() => {
+              if (!user) {
+                navigation.navigate('SelectAddress');
+                return;
+              }
+              navigation.navigate('Addresses');
+            }}
+            onLogin={() => navigation.navigate('Login')}
           />
         );
     }
@@ -97,7 +151,7 @@ function MainTabs() {
   return (
     <View style={styles.main}>
       {renderScreen()}
-      <BottomTabBar activeTab={activeTab} onTabPress={setActiveTab} />
+      <BottomTabBar activeTab={activeTab} onTabPress={onTabPress} />
     </View>
   );
 }
@@ -108,12 +162,19 @@ function RestaurantDetailWrapper({
   route: { params: { restaurant: Restaurant } };
 }) {
   const navigation = useNavigation<Nav>();
+  const { user } = useAuth();
 
   return (
     <RestaurantDetailScreen
       restaurant={route.params.restaurant}
       onBack={() => navigation.goBack()}
-      onCheckoutPress={() => navigation.navigate('Main', { tab: 'cart' })}
+      onCheckoutPress={() => {
+        if (!user) {
+          navigation.navigate('Login');
+          return;
+        }
+        navigation.navigate('Main', { tab: 'cart' });
+      }}
     />
   );
 }
@@ -140,11 +201,46 @@ function RewardsWrapper() {
 
 function AddressesWrapper() {
   const navigation = useNavigation<Nav>();
-  return <AddressesScreen onBack={() => navigation.goBack()} />;
+  return (
+    <AddressesScreen
+      onBack={() => navigation.goBack()}
+      onLogin={() => navigation.navigate('Login')}
+      onOpenMap={() =>
+        navigation.navigate('SelectAddress', { saveToAccount: true })
+      }
+    />
+  );
+}
+
+function SelectAddressWrapper({
+  route,
+}: {
+  route: { params?: { saveToAccount?: boolean } };
+}) {
+  const navigation = useNavigation<Nav>();
+  return (
+    <SelectAddressScreen
+      onBack={() => navigation.goBack()}
+      saveToAccount={Boolean(route.params?.saveToAccount)}
+    />
+  );
+}
+
+function LoginWrapper() {
+  const navigation = useNavigation<Nav>();
+  return (
+    <LoginScreen
+      onBack={() => {
+        if (navigation.canGoBack()) navigation.goBack();
+        else navigation.navigate('Main');
+      }}
+      onLoggedIn={() => navigation.navigate('Main')}
+    />
+  );
 }
 
 function RootNavigator() {
-  const { ready, user } = useAuth();
+  const { ready } = useAuth();
 
   if (!ready) {
     return (
@@ -156,17 +252,13 @@ function RootNavigator() {
 
   return (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
-      {user ? (
-        <>
-          <Stack.Screen name="Main" component={MainTabs} />
-          <Stack.Screen name="RestaurantDetail" component={RestaurantDetailWrapper} />
-          <Stack.Screen name="Tracking" component={TrackingWrapper} />
-          <Stack.Screen name="Rewards" component={RewardsWrapper} />
-          <Stack.Screen name="Addresses" component={AddressesWrapper} />
-        </>
-      ) : (
-        <Stack.Screen name="Login" component={LoginScreen} />
-      )}
+      <Stack.Screen name="Main" component={MainTabs} />
+      <Stack.Screen name="RestaurantDetail" component={RestaurantDetailWrapper} />
+      <Stack.Screen name="Tracking" component={TrackingWrapper} />
+      <Stack.Screen name="Rewards" component={RewardsWrapper} />
+      <Stack.Screen name="Addresses" component={AddressesWrapper} />
+      <Stack.Screen name="SelectAddress" component={SelectAddressWrapper} />
+      <Stack.Screen name="Login" component={LoginWrapper} />
     </Stack.Navigator>
   );
 }
@@ -174,12 +266,14 @@ function RootNavigator() {
 export default function App() {
   return (
     <AuthProvider>
-      <CartProvider>
-        <NavigationContainer>
-          <StatusBar style="light" />
-          <RootNavigator />
-        </NavigationContainer>
-      </CartProvider>
+      <DeliveryLocationProvider>
+        <CartProvider>
+          <NavigationContainer>
+            <StatusBar style="light" />
+            <RootNavigator />
+          </NavigationContainer>
+        </CartProvider>
+      </DeliveryLocationProvider>
     </AuthProvider>
   );
 }

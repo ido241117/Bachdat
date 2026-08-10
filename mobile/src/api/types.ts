@@ -53,6 +53,10 @@ export type ApiUser = {
   referralCode: string;
 };
 
+export type LoginResult =
+  | { needsName: true }
+  | { needsName?: undefined; token: string; user: ApiUser };
+
 export type ApiAddress = {
   _id: string;
   label: string;
@@ -120,6 +124,13 @@ export type ApiOrder = {
   createdAt: string;
   paymentMethod?: string;
   note?: string;
+  deliveryAddress?: {
+    label: string;
+    fullAddress: string;
+    note?: string;
+    lat?: number;
+    lng?: number;
+  };
   trackingSteps?: { key: string; label: string; done: boolean; at?: string }[];
 };
 

@@ -39,5 +39,8 @@ Health: https://bachdat.site/health
 ## 3. Mobile (Terminal 3)
 ```
 cd mobile
-npx expo start
+# Điền key Goong trong .env (xem .env.example)
+npx expo start -c
 ```
+
+Goong: `EXPO_PUBLIC_GOONG_MAPS_KEY` (map tiles) + `EXPO_PUBLIC_GOONG_API_KEY` (Places/Directions).

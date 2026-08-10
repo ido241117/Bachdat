@@ -46,7 +46,48 @@ router.patch("/me", requireAuth, async (req: AuthRequest, res) => {
 });
 
 router.get("/me/addresses", requireAuth, async (req: AuthRequest, res) => {
-  res.json(req.user!.addresses);
+  const user = req.user!;
+  const norm = (s: string) =>
+    String(s || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const near = (a: { lat?: number; lng?: number }, b: { lat?: number; lng?: number }) => {
+    if (a.lat == null || a.lng == null || b.lat == null || b.lng == null) return false;
+    const dLat = (a.lat - b.lat) * 111_320;
+    const dLng = (a.lng - b.lng) * 111_320 * Math.cos((b.lat * Math.PI) / 180);
+    return Math.hypot(dLat, dLng) < 40;
+  };
+
+  // Dedupe list đã lưu sẵn (giữ bản đầu / default ưu tiên)
+  const unique: typeof user.addresses = [];
+  const dropIds: string[] = [];
+  const sorted = [...user.addresses].sort(
+    (a, b) => Number(!!b.isDefault) - Number(!!a.isDefault),
+  );
+  for (const addr of sorted) {
+    const dup = unique.find(
+      (u) =>
+        norm(u.fullAddress) === norm(addr.fullAddress) || near(u, addr),
+    );
+    if (dup) {
+      dropIds.push(String(addr._id));
+    } else {
+      unique.push(addr);
+    }
+  }
+
+  if (dropIds.length) {
+    user.addresses = user.addresses.filter(
+      (a) => !dropIds.includes(String(a._id)),
+    );
+    await user.save();
+  }
+
+  res.json(user.addresses);
 });
 
 router.post("/me/addresses", requireAuth, async (req: AuthRequest, res) => {
@@ -55,6 +96,54 @@ router.post("/me/addresses", requireAuth, async (req: AuthRequest, res) => {
 
   if (!label || !fullAddress) {
     return res.status(400).json({ error: "Thiếu label hoặc fullAddress" });
+  }
+
+  const norm = (s: string) =>
+    String(s || "")
+      .toLowerCase()
+      .normalize("NFD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/\s+/g, " ")
+      .trim();
+
+  const nearMeters = (aLat?: number, aLng?: number, bLat?: number, bLng?: number) => {
+    if (
+      aLat == null ||
+      aLng == null ||
+      bLat == null ||
+      bLng == null ||
+      Number.isNaN(aLat) ||
+      Number.isNaN(aLng) ||
+      Number.isNaN(bLat) ||
+      Number.isNaN(bLng)
+    ) {
+      return Number.POSITIVE_INFINITY;
+    }
+    const dLat = (aLat - bLat) * 111_320;
+    const dLng = (aLng - bLng) * 111_320 * Math.cos((bLat * Math.PI) / 180);
+    return Math.hypot(dLat, dLng);
+  };
+
+  // Trùng nếu cùng fullAddress (normalize) hoặc khoảng cách < 40m
+  const existing = user.addresses.find((a) => {
+    if (norm(a.fullAddress) === norm(fullAddress)) return true;
+    return nearMeters(a.lat, a.lng, Number(lat), Number(lng)) < 40;
+  });
+
+  if (existing) {
+    if (label) existing.label = label;
+    existing.fullAddress = fullAddress;
+    if (note !== undefined) existing.note = note || "";
+    if (lat !== undefined) existing.lat = lat;
+    if (lng !== undefined) existing.lng = lng;
+    if (isDefault) {
+      user.addresses.forEach((a) => {
+        a.isDefault = false;
+      });
+      existing.isDefault = true;
+    }
+    await user.save();
+    return res.json(existing);
   }
 
   if (isDefault) {

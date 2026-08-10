@@ -10,9 +10,13 @@ function genReferralCode(phone: string) {
   return `QB${phone.slice(-4)}${Math.random().toString(36).slice(2, 6).toUpperCase()}`;
 }
 
-/** Dev OTP login — body: { phone, otp } */
+/** Dev OTP login/register — body: { phone, otp, name? } */
 router.post("/login", async (req, res) => {
-  const { phone, otp } = req.body as { phone?: string; otp?: string };
+  const { phone, otp, name } = req.body as {
+    phone?: string;
+    otp?: string;
+    name?: string;
+  };
 
   if (!phone || !/^\d{9,11}$/.test(phone)) {
     return res.status(400).json({ error: "Số điện thoại không hợp lệ" });
@@ -23,26 +27,18 @@ router.post("/login", async (req, res) => {
 
   let user = await User.findOne({ phone });
   if (!user) {
+    const trimmedName = name?.trim();
+    if (!trimmedName) {
+      // New phone number — tell the client to collect a name before creating the account.
+      return res.json({ needsName: true });
+    }
+    if (trimmedName.length < 2) {
+      return res.status(400).json({ error: "Tên phải có ít nhất 2 ký tự" });
+    }
     user = await User.create({
       phone,
-      name: `User ${phone.slice(-4)}`,
+      name: trimmedName,
       referralCode: genReferralCode(phone),
-      points: 1250,
-      tier: "silver",
-      addresses: [
-        {
-          label: "Căn hộ B12, Tòa nhà Sky",
-          fullAddress: "123 Đường Lê Lợi, Quận 1, TP.HCM",
-          note: "Để ở sảnh lễ tân",
-          lat: 10.7769,
-          lng: 106.7009,
-          isDefault: true,
-        },
-      ],
-      paymentMethods: [
-        { type: "momo", label: "MoMo", isDefault: true },
-        { type: "cash", label: "Tiền mặt", isDefault: false },
-      ],
     });
   }
 

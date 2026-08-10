@@ -18,11 +18,17 @@ import { useAuth } from '../context/AuthContext';
 const PHONE_REGEX = /^\d{9,11}$/;
 const RESEND_COOLDOWN = 30;
 
-export function LoginScreen() {
+type LoginScreenProps = {
+  onBack?: () => void;
+  onLoggedIn?: () => void;
+};
+
+export function LoginScreen({ onBack, onLoggedIn }: LoginScreenProps = {}) {
   const { login } = useAuth();
-  const [step, setStep] = useState<'phone' | 'otp'>('phone');
+  const [step, setStep] = useState<'phone' | 'otp' | 'name'>('phone');
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
+  const [name, setName] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [devOtp, setDevOtp] = useState<string | null>(null);
@@ -61,9 +67,29 @@ export function LoginScreen() {
     setError(null);
     setLoading(true);
     try {
-      await login(phone, otp);
+      const result = await login(phone, otp);
+      if (result.needsName) setStep('name');
+      else onLoggedIn?.();
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Xác thực thất bại');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const submitName = async () => {
+    const trimmed = name.trim();
+    if (trimmed.length < 2) {
+      setError('Tên phải có ít nhất 2 ký tự');
+      return;
+    }
+    setError(null);
+    setLoading(true);
+    try {
+      await login(phone, otp, trimmed);
+      onLoggedIn?.();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Không tạo được tài khoản');
     } finally {
       setLoading(false);
     }
@@ -72,6 +98,7 @@ export function LoginScreen() {
   const backToPhone = () => {
     setStep('phone');
     setOtp('');
+    setName('');
     setError(null);
     setDevOtp(null);
   };
@@ -80,9 +107,15 @@ export function LoginScreen() {
     <View style={styles.container}>
       <TopAppBar
         variant="title"
-        title={step === 'phone' ? 'Đăng nhập' : 'Nhập mã OTP'}
+        title={
+          step === 'phone'
+            ? 'Đăng nhập'
+            : step === 'otp'
+              ? 'Nhập mã OTP'
+              : 'Hoàn tất đăng ký'
+        }
         subtitle={step === 'otp' ? `Mã đã gửi đến ${phone}` : undefined}
-        onBack={step === 'otp' ? backToPhone : undefined}
+        onBack={step !== 'phone' ? backToPhone : onBack}
       />
       <KeyboardAvoidingView
         behavior={Platform.OS === 'ios' ? 'padding' : undefined}
@@ -121,7 +154,7 @@ export function LoginScreen() {
                 )}
               </TouchableOpacity>
             </>
-          ) : (
+          ) : step === 'otp' ? (
             <>
               <Text style={styles.label}>Mã OTP (6 số)</Text>
               <TextInput
@@ -176,6 +209,38 @@ export function LoginScreen() {
                   </Text>
                 </TouchableOpacity>
               </View>
+            </>
+          ) : (
+            <>
+              <Text style={styles.heading}>Chào bạn mới!</Text>
+              <Text style={styles.subheading}>
+                Nhập tên để hoàn tất tạo tài khoản
+              </Text>
+              <Text style={styles.label}>Tên của bạn</Text>
+              <TextInput
+                style={styles.input}
+                placeholder="VD: Minh Anh"
+                placeholderTextColor={Colors.textLight}
+                autoFocus
+                maxLength={40}
+                value={name}
+                onChangeText={setName}
+              />
+              {error && <Text style={styles.errorText}>{error}</Text>}
+              <TouchableOpacity
+                style={[
+                  styles.primaryBtn,
+                  (name.trim().length < 2 || loading) && styles.btnDisabled,
+                ]}
+                disabled={name.trim().length < 2 || loading}
+                onPress={submitName}
+              >
+                {loading ? (
+                  <ActivityIndicator color={Colors.white} />
+                ) : (
+                  <Text style={styles.primaryBtnText}>Hoàn tất</Text>
+                )}
+              </TouchableOpacity>
             </>
           )}
         </View>

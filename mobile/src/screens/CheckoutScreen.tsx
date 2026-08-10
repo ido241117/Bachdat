@@ -20,15 +20,28 @@ import { ordersApi, userApi, vouchersApi } from '../api';
 import type { ApiAddress, ApiVoucher } from '../api/types';
 import { TopAppBar } from '../components/TopAppBar';
 import { useCart } from '../context/CartContext';
+import type { PickedAddress } from '../components/AddressSearchModal';
+import { MapAddressPicker } from '../components/MapAddressPicker';
+import { GoongMapView } from '../components/GoongMapView';
+import { useDeliveryLocation } from '../context/DeliveryLocationContext';
 
 interface Props {
   onBrowse?: () => void;
   onOrderPlaced?: (orderId: string) => void;
   onBack?: () => void;
+  onOpenAddresses?: () => void;
+  onOpenMapPicker?: () => void;
 }
 
-export function CheckoutScreen({ onBrowse, onOrderPlaced, onBack }: Props) {
+export function CheckoutScreen({
+  onBrowse,
+  onOrderPlaced,
+  onBack,
+  onOpenAddresses,
+  onOpenMapPicker,
+}: Props) {
   const insets = useSafeAreaInsets();
+  const { location, setLocation } = useDeliveryLocation();
   const {
     restaurantId,
     restaurantName,
@@ -45,6 +58,7 @@ export function CheckoutScreen({ onBrowse, onOrderPlaced, onBack }: Props) {
   const [address, setAddress] = useState<ApiAddress | null>(null);
   const [addresses, setAddresses] = useState<ApiAddress[]>([]);
   const [addressOpen, setAddressOpen] = useState(false);
+  const [mapPickerOpen, setMapPickerOpen] = useState(false);
   const [discount, setDiscount] = useState(0);
   const [voucherCode, setVoucherCode] = useState('');
   const [vouchers, setVouchers] = useState<ApiVoucher[]>([]);
@@ -64,16 +78,41 @@ export function CheckoutScreen({ onBrowse, onOrderPlaced, onBack }: Props) {
         ]);
         if (cancelled) return;
         setAddresses(addrs);
-        setAddress(addrs.find((a) => a.isDefault) || addrs[0] || null);
+        const fromCtx =
+          location?.addressId
+            ? addrs.find((a) => a._id === location.addressId)
+            : null;
+        const def =
+          fromCtx ||
+          addrs.find((a) => a.isDefault) ||
+          addrs[0] ||
+          (location
+            ? {
+                _id: location.addressId || 'local',
+                label: location.label,
+                fullAddress: location.fullAddress,
+                lat: location.lat,
+                lng: location.lng,
+              }
+            : null);
+        setAddress(def);
         setVouchers(voucherList);
       } catch {
-        // keep empty
+        if (location && !cancelled) {
+          setAddress({
+            _id: location.addressId || 'local',
+            label: location.label,
+            fullAddress: location.fullAddress,
+            lat: location.lat,
+            lng: location.lng,
+          });
+        }
       }
     })();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [location?.addressId, location?.fullAddress]);
 
   useEffect(() => {
     let cancelled = false;
@@ -141,6 +180,95 @@ export function CheckoutScreen({ onBrowse, onOrderPlaced, onBack }: Props) {
     }
   };
 
+  const applyPickedAddress = async (picked: PickedAddress) => {
+    const norm = (s: string) =>
+      s
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/\s+/g, ' ')
+        .trim();
+
+    const existing = addresses.find((a) => {
+      if (norm(a.fullAddress) === norm(picked.fullAddress)) return true;
+      if (a.lat == null || a.lng == null) return false;
+      const dLat = (a.lat - picked.lat) * 111_320;
+      const dLng =
+        (a.lng - picked.lng) *
+        111_320 *
+        Math.cos((picked.lat * Math.PI) / 180);
+      return Math.hypot(dLat, dLng) < 40;
+    });
+
+    // Đã có sẵn → chỉ chọn lại, không tạo mới
+    if (existing) {
+      setAddress({
+        ...existing,
+        label: picked.label || existing.label,
+        fullAddress: picked.fullAddress || existing.fullAddress,
+        lat: picked.lat,
+        lng: picked.lng,
+      });
+      void setLocation({
+        label: picked.label || existing.label,
+        fullAddress: picked.fullAddress || existing.fullAddress,
+        lat: picked.lat,
+        lng: picked.lng,
+        addressId: existing._id,
+      });
+      setMapPickerOpen(false);
+      return;
+    }
+
+    const optimistic: ApiAddress = {
+      _id: `tmp-${Date.now()}`,
+      label: picked.label,
+      fullAddress: picked.fullAddress,
+      lat: picked.lat,
+      lng: picked.lng,
+      isDefault: addresses.length === 0,
+    };
+    setAddress(optimistic);
+    void setLocation({
+      label: picked.label,
+      fullAddress: picked.fullAddress,
+      lat: picked.lat,
+      lng: picked.lng,
+    });
+    setMapPickerOpen(false);
+    try {
+      const saved = await userApi.addAddress({
+        label: picked.label,
+        fullAddress: picked.fullAddress,
+        lat: picked.lat,
+        lng: picked.lng,
+        isDefault: addresses.length === 0,
+      });
+      setAddress((prev) =>
+        prev && prev.lat === picked.lat && prev.lng === picked.lng
+          ? { ...saved, lat: picked.lat, lng: picked.lng }
+          : saved,
+      );
+      void setLocation({
+        label: saved.label,
+        fullAddress: saved.fullAddress,
+        lat: picked.lat,
+        lng: picked.lng,
+        addressId: saved._id,
+      });
+      setAddresses((prev) => {
+        const withoutDup = prev.filter(
+          (a) =>
+            a._id !== saved._id &&
+            norm(a.fullAddress) !== norm(saved.fullAddress),
+        );
+        return [saved, ...withoutDup];
+      });
+    } catch {
+      // giữ optimistic
+    }
+  };
+
   return (
     <View style={styles.container}>
       <TopAppBar
@@ -158,23 +286,65 @@ export function CheckoutScreen({ onBrowse, onOrderPlaced, onBack }: Props) {
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionLabel}>ĐỊA CHỈ GIAO HÀNG</Text>
-            <TouchableOpacity onPress={() => setAddressOpen(true)}>
-              <Text style={styles.changeBtn}>Thay đổi</Text>
-            </TouchableOpacity>
+            <View style={styles.addressActions}>
+              <TouchableOpacity
+                onPress={() =>
+                  onOpenMapPicker ? onOpenMapPicker() : setMapPickerOpen(true)
+                }
+              >
+                <Text style={styles.changeBtn}>Chọn trên map</Text>
+              </TouchableOpacity>
+              <TouchableOpacity
+                onPress={() =>
+                  onOpenAddresses ? onOpenAddresses() : setAddressOpen(true)
+                }
+              >
+                <Text style={styles.changeBtn}>Đã lưu</Text>
+              </TouchableOpacity>
+            </View>
           </View>
-          <View style={styles.addressCard}>
+          <TouchableOpacity
+            style={styles.addressCard}
+            activeOpacity={0.85}
+            onPress={() =>
+              onOpenAddresses ? onOpenAddresses() : setMapPickerOpen(true)
+            }
+          >
             <View style={styles.addressIcon}>
               <MaterialIcons name="location-on" size={22} color={Colors.primary} />
             </View>
             <View style={styles.addressInfo}>
               <Text style={styles.addressTitle}>
-                {address?.label || 'Chưa có địa chỉ'}
+                {address?.label || 'Chưa chọn điểm giao'}
               </Text>
               <Text style={styles.addressText}>
-                {address?.fullAddress || 'Thêm địa chỉ trong tài khoản'}
+                {address?.fullAddress ||
+                  'Chạm để mở bản đồ và kéo ghim (kiểu ShopeeFood)'}
               </Text>
             </View>
-          </View>
+            <MaterialIcons name="map" size={22} color={Colors.primary} />
+          </TouchableOpacity>
+          {address?.lat != null && address?.lng != null ? (
+            <TouchableOpacity
+              activeOpacity={0.9}
+              onPress={() => setMapPickerOpen(true)}
+            >
+              <GoongMapView
+                style={styles.miniMap}
+                markers={[
+                  {
+                    id: 'dest',
+                    lat: address.lat,
+                    lng: address.lng,
+                    label: 'Giao đến',
+                    color: '#22c55e',
+                  },
+                ]}
+                center={{ lat: address.lat, lng: address.lng }}
+                zoom={15}
+              />
+            </TouchableOpacity>
+          ) : null}
         </View>
 
         <View style={styles.section}>
@@ -309,7 +479,18 @@ export function CheckoutScreen({ onBrowse, onOrderPlaced, onBack }: Props) {
       <Modal visible={addressOpen} transparent animationType="slide">
         <Pressable style={styles.modalBackdrop} onPress={() => setAddressOpen(false)}>
           <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
-            <Text style={styles.sheetTitle}>Chọn địa chỉ</Text>
+            <Text style={styles.sheetTitle}>Chọn địa chỉ đã lưu</Text>
+            <TouchableOpacity
+              style={styles.sheetItem}
+              onPress={() => {
+                setAddressOpen(false);
+                setMapPickerOpen(true);
+              }}
+            >
+              <Text style={[styles.sheetItemTitle, { color: Colors.primary }]}>
+                + Chọn trên bản đồ
+              </Text>
+            </TouchableOpacity>
             {addresses.map((a) => (
               <TouchableOpacity
                 key={a._id}
@@ -329,6 +510,18 @@ export function CheckoutScreen({ onBrowse, onOrderPlaced, onBack }: Props) {
           </Pressable>
         </Pressable>
       </Modal>
+
+      <MapAddressPicker
+        visible={mapPickerOpen}
+        onClose={() => setMapPickerOpen(false)}
+        onConfirm={applyPickedAddress}
+        autoLocate
+        initial={
+          address?.lat != null && address?.lng != null
+            ? { lat: address.lat, lng: address.lng }
+            : undefined
+        }
+      />
 
       <Modal visible={voucherOpen} transparent animationType="slide">
         <Pressable style={styles.modalBackdrop} onPress={() => setVoucherOpen(false)}>
@@ -380,6 +573,12 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
   },
   changeBtn: { fontSize: 12, fontWeight: '700', color: Colors.primary },
+  addressActions: { flexDirection: 'row', gap: 14 },
+  miniMap: {
+    height: 140,
+    borderRadius: 14,
+    overflow: 'hidden',
+  },
   addressCard: {
     flexDirection: 'row',
     backgroundColor: Colors.white,

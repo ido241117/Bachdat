@@ -14,12 +14,13 @@ import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import { Restaurant } from '../data/restaurants';
 import { formatPrice } from '../api/format';
-import { homeApi, userApi } from '../api';
+import { homeApi } from '../api';
 import { mapCategory, mapRestaurant } from '../api/mappers';
 import type { ApiBanner } from '../api/types';
 import { TopAppBar } from '../components/TopAppBar';
 import { RestaurantCard } from '../components/RestaurantCard';
 import { useCart } from '../context/CartContext';
+import { useDeliveryLocation } from '../context/DeliveryLocationContext';
 
 const CATEGORY_ICONS: Record<string, keyof typeof MaterialCommunityIcons.glyphMap> = {
   rice: 'rice',
@@ -38,10 +39,17 @@ type SortKey = 'popular' | 'near' | 'rating';
 interface Props {
   onRestaurantPress: (restaurant: Restaurant) => void;
   onCheckoutPress: () => void;
+  onAddressPress?: () => void;
+  onNeedLogin?: () => void;
 }
 
-export function HomeScreen({ onRestaurantPress, onCheckoutPress }: Props) {
+export function HomeScreen({
+  onRestaurantPress,
+  onCheckoutPress,
+  onAddressPress,
+}: Props) {
   const { itemCount, subtotal } = useCart();
+  const { location } = useDeliveryLocation();
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -54,7 +62,9 @@ export function HomeScreen({ onRestaurantPress, onCheckoutPress }: Props) {
   const [sort, setSort] = useState<SortKey>('popular');
   const [freeShipOnly, setFreeShipOnly] = useState(false);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
-  const [addressLabel, setAddressLabel] = useState('Quận 1, TP. Hồ Chí Minh');
+
+  const addressLabel =
+    location?.fullAddress || location?.label || 'Chọn địa chỉ giao hàng';
 
   useEffect(() => {
     let cancelled = false;
@@ -63,16 +73,11 @@ export function HomeScreen({ onRestaurantPress, onCheckoutPress }: Props) {
       try {
         setLoading(true);
         setError(null);
-        const [data, addresses] = await Promise.all([
-          homeApi.get(),
-          userApi.addresses().catch(() => []),
-        ]);
+        const data = await homeApi.get();
         if (cancelled) return;
         setBanners(data.banners);
         setCategories(data.categories.map(mapCategory));
         setRestaurants(data.restaurants.map((r) => mapRestaurant(r)));
-        const def = addresses.find((a) => a.isDefault) || addresses[0];
-        if (def) setAddressLabel(def.fullAddress);
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Không tải được trang chủ');
@@ -132,7 +137,12 @@ export function HomeScreen({ onRestaurantPress, onCheckoutPress }: Props) {
 
   return (
     <View style={styles.container}>
-      <TopAppBar variant="orange" addressLabel={addressLabel} onBellPress={() => {}} />
+      <TopAppBar
+        variant="orange"
+        addressLabel={addressLabel}
+        onAddressPress={onAddressPress}
+        onBellPress={() => {}}
+      />
 
       {loading ? (
         <View style={styles.centered}>

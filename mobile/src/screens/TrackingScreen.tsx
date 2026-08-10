@@ -12,9 +12,11 @@ import {
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import { formatPrice } from '../api/format';
-import { ordersApi, type TrackingStep } from '../api';
+import { ordersApi, restaurantApi, type TrackingStep } from '../api';
+import { goongApi, type GoongRoute } from '../api/goong';
 import type { ApiOrder } from '../api/types';
 import { TopAppBar } from '../components/TopAppBar';
+import { GoongMapView, type MapMarker } from '../components/GoongMapView';
 
 interface Props {
   orderId: string;
@@ -22,12 +24,17 @@ interface Props {
   onGoOrders: () => void;
 }
 
+const HCM = { lat: 10.7769, lng: 106.7009 };
+
 export function TrackingScreen({ orderId, onBack, onGoOrders }: Props) {
   const [order, setOrder] = useState<ApiOrder | null>(null);
   const [steps, setSteps] = useState<TrackingStep[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [cancelling, setCancelling] = useState(false);
+  const [route, setRoute] = useState<GoongRoute | null>(null);
+  const [markers, setMarkers] = useState<MapMarker[]>([]);
+  const [mapCenter, setMapCenter] = useState(HCM);
 
   const load = useCallback(
     async (isRefresh = false) => {
@@ -40,6 +47,68 @@ export function TrackingScreen({ orderId, onBack, onGoOrders }: Props) {
         ]);
         setOrder(detail);
         setSteps(tracking.trackingSteps || []);
+
+        let restaurantPoint = { ...HCM };
+        if (detail.restaurantId) {
+          try {
+            const rest = await restaurantApi.getById(detail.restaurantId);
+            const [lng, lat] = rest.location?.coordinates || [
+              HCM.lng,
+              HCM.lat,
+            ];
+            restaurantPoint = { lat, lng };
+          } catch {
+            // keep default HCM
+          }
+        }
+
+        const destLat = detail.deliveryAddress?.lat;
+        const destLng = detail.deliveryAddress?.lng;
+        const hasDest =
+          typeof destLat === 'number' &&
+          typeof destLng === 'number' &&
+          !Number.isNaN(destLat) &&
+          !Number.isNaN(destLng);
+
+        const deliveryPoint = hasDest
+          ? { lat: destLat!, lng: destLng! }
+          : restaurantPoint;
+
+        const nextMarkers: MapMarker[] = [
+          {
+            id: 'restaurant',
+            lat: restaurantPoint.lat,
+            lng: restaurantPoint.lng,
+            label: 'Quán',
+            color: '#FF6B2B',
+          },
+        ];
+        if (hasDest) {
+          nextMarkers.push({
+            id: 'delivery',
+            lat: deliveryPoint.lat,
+            lng: deliveryPoint.lng,
+            label: 'Giao đến',
+            color: '#22c55e',
+          });
+        }
+        setMarkers(nextMarkers);
+        setMapCenter(deliveryPoint);
+
+        if (hasDest) {
+          try {
+            const dir = await goongApi.direction(
+              restaurantPoint,
+              deliveryPoint,
+              'bike',
+            );
+            setRoute(dir);
+          } catch {
+            setRoute(null);
+          }
+        } else {
+          setRoute(null);
+        }
       } catch (err) {
         Alert.alert(
           'Lỗi',
@@ -108,13 +177,34 @@ export function TrackingScreen({ orderId, onBack, onGoOrders }: Props) {
           }
         >
           <View style={styles.mapCard}>
-            <Text style={styles.mapEmoji}>🗺️</Text>
-            <Text style={styles.mapHint}>Bản đồ theo dõi</Text>
+            <GoongMapView
+              style={styles.map}
+              markers={markers}
+              route={route?.coordinates || []}
+              center={mapCenter}
+              zoom={13}
+            />
             <View style={styles.etaBadge}>
-              <Text style={styles.etaLabel}>Trạng thái</Text>
-              <Text style={styles.etaValue}>{order?.status || '—'}</Text>
+              <Text style={styles.etaLabel}>
+                {route ? 'Thời gian ước tính' : 'Trạng thái'}
+              </Text>
+              <Text style={styles.etaValue}>
+                {route?.durationText || order?.status || '—'}
+              </Text>
+              {route?.distanceText ? (
+                <Text style={styles.etaSub}>{route.distanceText}</Text>
+              ) : null}
             </View>
           </View>
+
+          {order?.deliveryAddress?.fullAddress ? (
+            <View style={styles.card}>
+              <Text style={styles.cardTitle}>Địa chỉ giao</Text>
+              <Text style={styles.addressText}>
+                {order.deliveryAddress.label} · {order.deliveryAddress.fullAddress}
+              </Text>
+            </View>
+          ) : null}
 
           <View style={styles.card}>
             <Text style={styles.cardTitle}>Trạng thái đơn hàng</Text>
@@ -139,10 +229,7 @@ export function TrackingScreen({ orderId, onBack, onGoOrders }: Props) {
                     </View>
                     {i < steps.length - 1 && (
                       <View
-                        style={[
-                          styles.line,
-                          step.done ? styles.lineDone : null,
-                        ]}
+                        style={[styles.line, step.done ? styles.lineDone : null]}
                       />
                     )}
                   </View>
@@ -219,16 +306,13 @@ const styles = StyleSheet.create({
   centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   body: { padding: 16, paddingBottom: 40, gap: 12 },
   mapCard: {
-    height: 160,
+    height: 220,
     borderRadius: 16,
-    backgroundColor: '#e8f5e9',
-    alignItems: 'center',
-    justifyContent: 'center',
     overflow: 'hidden',
+    backgroundColor: Colors.surfaceContainerHigh,
     position: 'relative',
   },
-  mapEmoji: { fontSize: 40 },
-  mapHint: { color: Colors.textLight, marginTop: 4 },
+  map: { flex: 1 },
   etaBadge: {
     position: 'absolute',
     top: 12,
@@ -237,9 +321,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     paddingHorizontal: 12,
     paddingVertical: 8,
+    maxWidth: '70%',
   },
   etaLabel: { fontSize: 11, color: Colors.secondary },
   etaValue: { fontSize: 14, fontWeight: '700', color: Colors.primary },
+  etaSub: { fontSize: 11, color: Colors.secondary, marginTop: 2 },
+  addressText: { fontSize: 13, color: Colors.onSurfaceVariant, lineHeight: 18 },
   card: {
     backgroundColor: Colors.white,
     borderRadius: 16,
@@ -301,7 +388,6 @@ const styles = StyleSheet.create({
   totalRow: {
     borderTopWidth: 1,
     borderTopColor: Colors.outlineVariant,
-    borderStyle: 'dashed',
     marginTop: 8,
     paddingTop: 8,
     flexDirection: 'row',
@@ -318,9 +404,6 @@ const styles = StyleSheet.create({
     borderColor: Colors.outlineVariant,
   },
   secondaryBtnText: { color: Colors.primary, fontWeight: '700' },
-  cancelBtn: {
-    padding: 14,
-    alignItems: 'center',
-  },
+  cancelBtn: { padding: 14, alignItems: 'center' },
   cancelText: { color: Colors.error, fontWeight: '700' },
 });

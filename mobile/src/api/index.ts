@@ -10,6 +10,7 @@ import type {
   ApiCart,
   HomeResponse,
   MenuResponse,
+  LoginResult,
 } from './types';
 
 export const authApi = {
@@ -19,10 +20,10 @@ export const authApi = {
       body: JSON.stringify({ phone }),
     }),
 
-  login: (phone: string, otp: string) =>
-    api<{ token: string; user: ApiUser }>('/auth/login', {
+  login: (phone: string, otp: string, name?: string) =>
+    api<LoginResult>('/auth/login', {
       method: 'POST',
-      body: JSON.stringify({ phone, otp }),
+      body: JSON.stringify(name ? { phone, otp, name } : { phone, otp }),
     }),
 
   logout: () => api<{ ok: boolean }>('/auth/logout', { method: 'POST' }),
@@ -40,6 +41,13 @@ export const homeApi = {
 
 export const restaurantApi = {
   getMenu: (id: string) => api<MenuResponse>(`/restaurants/${id}/menu`),
+  getById: (id: string) =>
+    api<{
+      _id: string;
+      name: string;
+      location?: { type: string; coordinates: [number, number] };
+      address?: string;
+    }>(`/restaurants/${id}`),
 };
 
 export type TrackingStep = {

@@ -18,7 +18,7 @@ const USER_KEY = 'mealnow_user';
 type AuthContextValue = {
   user: ApiUser | null;
   ready: boolean;
-  login: (phone: string, otp: string) => Promise<void>;
+  login: (phone: string, otp: string, name?: string) => Promise<{ needsName: boolean }>;
   logout: () => Promise<void>;
 };
 
@@ -37,9 +37,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     ]);
   }, []);
 
-  const login = useCallback(async (phone: string, otp: string) => {
-    const { token, user: nextUser } = await authApi.login(phone, otp);
-    await persist(token, nextUser);
+  const login = useCallback(async (phone: string, otp: string, name?: string) => {
+    const result = await authApi.login(phone, otp, name);
+    if (result.needsName) return { needsName: true };
+    await persist(result.token, result.user);
+    return { needsName: false };
   }, [persist]);
 
   const logout = useCallback(async () => {

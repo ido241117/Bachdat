@@ -19,6 +19,7 @@ interface Props {
   onBack?: () => void;
   onCartPress?: () => void;
   onBellPress?: () => void;
+  onAddressPress?: () => void;
   showCart?: boolean;
 }
 
@@ -26,10 +27,11 @@ export function TopAppBar({
   variant = 'brand',
   title,
   subtitle,
-  addressLabel = 'Quận 1, TP. Hồ Chí Minh',
+  addressLabel = 'Chọn địa chỉ giao hàng',
   onBack,
   onCartPress,
   onBellPress,
+  onAddressPress,
   showCart = false,
 }: Props) {
   if (variant === 'location' || variant === 'orange' || variant === 'brand') {
@@ -42,15 +44,23 @@ export function TopAppBar({
               style={styles.logo}
               resizeMode="contain"
             />
-            <View style={styles.locationBlock}>
+            <TouchableOpacity
+              style={styles.locationBlock}
+              onPress={onAddressPress}
+              disabled={!onAddressPress}
+              activeOpacity={0.85}
+            >
               <Text style={styles.deliverLabel}>Giao đến</Text>
               <View style={styles.addressRow}>
                 <MaterialIcons name="location-on" size={14} color={Colors.white} />
                 <Text style={styles.addressText} numberOfLines={1}>
                   {addressLabel}
                 </Text>
+                {onAddressPress ? (
+                  <MaterialIcons name="chevron-right" size={16} color={Colors.white} />
+                ) : null}
               </View>
-            </View>
+            </TouchableOpacity>
           </View>
           <View style={styles.orangeActions}>
             {onBellPress && (
