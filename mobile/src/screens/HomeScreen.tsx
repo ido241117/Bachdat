@@ -415,9 +415,16 @@ const styles = StyleSheet.create({
   categoriesSection: { paddingHorizontal: 16, marginBottom: 12 },
   categoryGrid: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
+    flexWrap: 'wrap',
+    marginHorizontal: -6,
   },
-  categoryItem: { alignItems: 'center', gap: 4 },
+  categoryItem: {
+    width: '50%',
+    paddingHorizontal: 6,
+    paddingVertical: 10,
+    alignItems: 'center',
+    gap: 6,
+  },
   categoryIcon: {
     width: 56,
     height: 56,
@@ -431,6 +438,7 @@ const styles = StyleSheet.create({
     fontSize: 13,
     fontWeight: '600',
     color: Colors.onSurface,
+    textAlign: 'center',
   },
   categoryLabelActive: { color: Colors.primary },
   chipsRow: { paddingHorizontal: 16, gap: 8, paddingBottom: 12 },

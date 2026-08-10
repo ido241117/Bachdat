@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { api, formatVnd, type Stats } from "../api";
 
 export function OverviewPage() {
@@ -24,14 +25,21 @@ export function OverviewPage() {
     { label: "Đơn hoàn thành", value: String(stats.revenue.completedOrders) },
     { label: "Cửa hàng", value: String(stats.counts.restaurants) },
     { label: "Người dùng", value: String(stats.counts.users) },
+    { label: "Voucher", value: String(stats.counts.vouchers ?? 0) },
+    { label: "Banner", value: String(stats.counts.banners ?? 0) },
   ];
+
+  const maxRev = Math.max(
+    1,
+    ...(stats.last7Days || []).map((d) => d.revenue),
+  );
 
   return (
     <div className="page">
       <header className="page-head">
         <h1>Tổng quan</h1>
       </header>
-      <div className="stat-grid">
+      <div className="stat-grid four">
         {cards.map((c) => (
           <div key={c.label} className="stat-card">
             <span className="muted">{c.label}</span>
@@ -39,6 +47,23 @@ export function OverviewPage() {
           </div>
         ))}
       </div>
+
+      <section className="panel">
+        <h2>Doanh thu 7 ngày gần nhất</h2>
+        <div className="bars">
+          {(stats.last7Days || []).map((d) => (
+            <div key={d.date} className="bar-col">
+              <div
+                className="bar"
+                style={{ height: `${Math.max(4, (d.revenue / maxRev) * 120)}px` }}
+                title={formatVnd(d.revenue)}
+              />
+              <span className="bar-label">{d.date.slice(5)}</span>
+              <span className="muted small">{d.orders} đơn</span>
+            </div>
+          ))}
+        </div>
+      </section>
 
       <div className="grid-2">
         <section className="panel">
@@ -56,7 +81,7 @@ export function OverviewPage() {
           <h2>Top quán (doanh thu)</h2>
           <ul className="kv">
             {stats.topRestaurants.map((r) => (
-              <li key={r._id}>
+              <li key={String(r._id)}>
                 <span>{r.name || "—"}</span>
                 <strong>{formatVnd(r.revenue)}</strong>
               </li>
@@ -77,6 +102,7 @@ export function OverviewPage() {
               <th>Trạng thái</th>
               <th>Tổng</th>
               <th>Thời gian</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -88,6 +114,9 @@ export function OverviewPage() {
                 </td>
                 <td>{formatVnd(o.total)}</td>
                 <td>{new Date(o.createdAt).toLocaleString("vi-VN")}</td>
+                <td>
+                  <Link to={`/orders/${o._id}`}>Chi tiết</Link>
+                </td>
               </tr>
             ))}
           </tbody>

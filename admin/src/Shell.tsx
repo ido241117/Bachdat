@@ -5,6 +5,9 @@ const links = [
   { to: "/", label: "Tổng quan", end: true },
   { to: "/restaurants", label: "Cửa hàng" },
   { to: "/orders", label: "Đơn hàng" },
+  { to: "/categories", label: "Danh mục" },
+  { to: "/vouchers", label: "Voucher" },
+  { to: "/banners", label: "Banner" },
   { to: "/users", label: "Người dùng" },
 ];
 

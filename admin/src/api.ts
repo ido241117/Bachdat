@@ -46,6 +46,8 @@ export type Stats = {
     restaurants: number;
     users: number;
     menuItems: number;
+    vouchers?: number;
+    banners?: number;
     ordersByStatus: Record<string, number>;
   };
   recentOrders: OrderRow[];
@@ -55,6 +57,16 @@ export type Stats = {
     revenue: number;
     orders: number;
   }>;
+  last7Days?: Array<{ date: string; revenue: number; orders: number }>;
+};
+
+export type CategoryRow = {
+  _id: string;
+  name: string;
+  slug: string;
+  icon?: string;
+  sortOrder?: number;
+  isActive?: boolean;
 };
 
 export type RestaurantRow = {
@@ -70,10 +82,14 @@ export type RestaurantRow = {
   isPopular?: boolean;
   priceLevel?: string;
   rating?: number;
+  reviewCount?: number;
   menuCount?: number;
   location?: { coordinates: [number, number] };
   openingHours?: string;
   tags?: string[];
+  categoryIds?: string[];
+  deliveryTimeMin?: number;
+  deliveryTimeMax?: number;
 };
 
 export type MenuRow = {
@@ -86,20 +102,39 @@ export type MenuRow = {
   menuSection: string;
   isFeatured?: boolean;
   isAvailable?: boolean;
+  sortOrder?: number;
+  options?: Array<{ name: string; price: number }>;
 };
 
 export type OrderRow = {
   _id: string;
   restaurantName: string;
+  restaurantImage?: string;
   status: string;
   total: number;
   subtotal: number;
   deliveryFee: number;
   discount: number;
   paymentMethod: string;
+  voucherCode?: string;
+  note?: string;
   createdAt: string;
-  deliveryAddress?: { fullAddress: string; label: string };
-  items?: Array<{ name: string; quantity: number; price: number }>;
+  deliveredAt?: string;
+  deliveryAddress?: { fullAddress: string; label: string; note?: string };
+  items?: Array<{
+    name: string;
+    quantity: number;
+    price: number;
+    options?: string[];
+    note?: string;
+  }>;
+  trackingSteps?: Array<{
+    key: string;
+    label: string;
+    done: boolean;
+    at?: string;
+  }>;
+  user?: { name?: string; phone?: string } | null;
 };
 
 export type UserRow = {
@@ -110,6 +145,37 @@ export type UserRow = {
   points: number;
   role: string;
   createdAt: string;
+};
+
+export type VoucherRow = {
+  _id: string;
+  code: string;
+  type: string;
+  title: string;
+  description?: string;
+  value: number;
+  maxDiscount?: number;
+  minOrderAmount?: number;
+  applicableTo?: string;
+  totalLimit?: number;
+  usedCount?: number;
+  expiresAt?: string;
+  filterTag?: string;
+  isActive?: boolean;
+};
+
+export type BannerRow = {
+  _id: string;
+  title: string;
+  subtitle?: string;
+  tag?: string;
+  image?: string;
+  linkType?: string;
+  linkId?: string;
+  screen?: string;
+  sortOrder?: number;
+  isActive?: boolean;
+  expiresAt?: string;
 };
 
 export const api = {
@@ -129,7 +195,27 @@ export const api = {
     }),
   me: () => request<AdminUser>("/admin/me"),
   stats: () => request<Stats>("/admin/stats"),
-  restaurants: () => request<RestaurantRow[]>("/admin/restaurants"),
+
+  categories: () => request<CategoryRow[]>("/admin/categories"),
+  createCategory: (body: Record<string, unknown>) =>
+    request<CategoryRow>("/admin/categories", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  updateCategory: (id: string, body: Record<string, unknown>) =>
+    request<CategoryRow>(`/admin/categories/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  deleteCategory: (id: string) =>
+    request<{ ok: boolean }>(`/admin/categories/${id}`, { method: "DELETE" }),
+
+  restaurants: (q?: string) =>
+    request<RestaurantRow[]>(
+      `/admin/restaurants${q ? `?q=${encodeURIComponent(q)}` : ""}`,
+    ),
+  restaurant: (id: string) =>
+    request<RestaurantRow>(`/admin/restaurants/${id}`),
   createRestaurant: (body: Record<string, unknown>) =>
     request<RestaurantRow>("/admin/restaurants", {
       method: "POST",
@@ -142,6 +228,7 @@ export const api = {
     }),
   deleteRestaurant: (id: string) =>
     request<{ ok: boolean }>(`/admin/restaurants/${id}`, { method: "DELETE" }),
+
   menu: (restaurantId: string) =>
     request<MenuRow[]>(`/admin/restaurants/${restaurantId}/menu`),
   createMenu: (restaurantId: string, body: Record<string, unknown>) =>
@@ -156,16 +243,53 @@ export const api = {
     }),
   deleteMenu: (itemId: string) =>
     request<{ ok: boolean }>(`/admin/menu/${itemId}`, { method: "DELETE" }),
-  orders: (status?: string) =>
-    request<OrderRow[]>(
-      `/admin/orders${status && status !== "all" ? `?status=${status}` : ""}`,
-    ),
+
+  orders: (params?: { status?: string; q?: string }) => {
+    const qs = new URLSearchParams();
+    if (params?.status && params.status !== "all") qs.set("status", params.status);
+    if (params?.q) qs.set("q", params.q);
+    const s = qs.toString();
+    return request<OrderRow[]>(`/admin/orders${s ? `?${s}` : ""}`);
+  },
+  order: (id: string) => request<OrderRow>(`/admin/orders/${id}`),
   updateOrder: (id: string, status: string) =>
     request<OrderRow>(`/admin/orders/${id}`, {
       method: "PATCH",
       body: JSON.stringify({ status }),
     }),
-  users: () => request<UserRow[]>("/admin/users"),
+
+  vouchers: () => request<VoucherRow[]>("/admin/vouchers"),
+  createVoucher: (body: Record<string, unknown>) =>
+    request<VoucherRow>("/admin/vouchers", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  updateVoucher: (id: string, body: Record<string, unknown>) =>
+    request<VoucherRow>(`/admin/vouchers/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  deleteVoucher: (id: string) =>
+    request<{ ok: boolean }>(`/admin/vouchers/${id}`, { method: "DELETE" }),
+
+  banners: () => request<BannerRow[]>("/admin/banners"),
+  createBanner: (body: Record<string, unknown>) =>
+    request<BannerRow>("/admin/banners", {
+      method: "POST",
+      body: JSON.stringify(body),
+    }),
+  updateBanner: (id: string, body: Record<string, unknown>) =>
+    request<BannerRow>(`/admin/banners/${id}`, {
+      method: "PATCH",
+      body: JSON.stringify(body),
+    }),
+  deleteBanner: (id: string) =>
+    request<{ ok: boolean }>(`/admin/banners/${id}`, { method: "DELETE" }),
+
+  users: (q?: string) =>
+    request<UserRow[]>(
+      `/admin/users${q ? `?q=${encodeURIComponent(q)}` : ""}`,
+    ),
   setRole: (id: string, role: string) =>
     request<UserRow>(`/admin/users/${id}/role`, {
       method: "PATCH",

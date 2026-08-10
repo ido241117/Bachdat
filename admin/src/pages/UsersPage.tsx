@@ -3,11 +3,12 @@ import { api, type UserRow } from "../api";
 
 export function UsersPage() {
   const [users, setUsers] = useState<UserRow[]>([]);
+  const [q, setQ] = useState("");
   const [error, setError] = useState<string | null>(null);
 
-  const load = () =>
+  const load = (query = q) =>
     api
-      .users()
+      .users(query)
       .then(setUsers)
       .catch((err) =>
         setError(err instanceof Error ? err.message : "Lỗi tải users"),
@@ -30,7 +31,17 @@ export function UsersPage() {
     <div className="page">
       <header className="page-head">
         <h1>Người dùng</h1>
-        <span className="muted">{users.length} tài khoản</span>
+        <div className="row">
+          <input
+            placeholder="Tìm tên / SĐT..."
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && load()}
+          />
+          <button type="button" className="btn ghost dark" onClick={() => load()}>
+            Tìm
+          </button>
+        </div>
       </header>
       {error && <p className="error">{error}</p>}
       <section className="panel">

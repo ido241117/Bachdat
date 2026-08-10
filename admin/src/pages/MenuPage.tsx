@@ -1,23 +1,44 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useParams } from "react-router-dom";
 import { api, formatVnd, type MenuRow } from "../api";
+import { Modal } from "../components/Modal";
 
-const empty = {
+const emptyForm = {
   name: "",
   description: "",
   price: "",
   image: "",
   menuSection: "mains",
+  sortOrder: "0",
   isFeatured: false,
   isAvailable: true,
+  optionsText: "",
 };
+
+function optionsFromText(text: string) {
+  return text
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .map((line) => {
+      const [name, price] = line.split("|").map((x) => x.trim());
+      return { name, price: Number(price || 0) };
+    })
+    .filter((o) => o.name);
+}
+
+function optionsToText(opts?: Array<{ name: string; price: number }>) {
+  return (opts || []).map((o) => `${o.name}|${o.price}`).join("\n");
+}
 
 export function MenuPage() {
   const { id = "" } = useParams();
   const [items, setItems] = useState<MenuRow[]>([]);
-  const [form, setForm] = useState(empty);
-  const [error, setError] = useState<string | null>(null);
   const [restaurantName, setRestaurantName] = useState("Quán");
+  const [form, setForm] = useState(emptyForm);
+  const [editing, setEditing] = useState<MenuRow | null>(null);
+  const [open, setOpen] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   const load = async () => {
     const [menu, restaurants] = await Promise.all([
@@ -35,24 +56,50 @@ export function MenuPage() {
     );
   }, [id]);
 
-  const onCreate = async (e: FormEvent) => {
-    e.preventDefault();
-    setError(null);
-    try {
-      await api.createMenu(id, {
-        ...form,
-        price: Number(form.price),
-      });
-      setForm(empty);
-      await load();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Thêm món thất bại");
-    }
+  const openCreate = () => {
+    setEditing(null);
+    setForm(emptyForm);
+    setOpen(true);
   };
 
-  const toggleAvailable = async (item: MenuRow) => {
-    await api.updateMenu(item._id, { isAvailable: !item.isAvailable });
-    await load();
+  const openEdit = (item: MenuRow) => {
+    setEditing(item);
+    setForm({
+      name: item.name,
+      description: item.description || "",
+      price: String(item.price),
+      image: item.image || "",
+      menuSection: item.menuSection || "mains",
+      sortOrder: String(item.sortOrder ?? 0),
+      isFeatured: Boolean(item.isFeatured),
+      isAvailable: item.isAvailable !== false,
+      optionsText: optionsToText(item.options),
+    });
+    setOpen(true);
+  };
+
+  const onSave = async (e: FormEvent) => {
+    e.preventDefault();
+    setError(null);
+    const body = {
+      name: form.name,
+      description: form.description,
+      price: Number(form.price),
+      image: form.image,
+      menuSection: form.menuSection,
+      sortOrder: Number(form.sortOrder || 0),
+      isFeatured: form.isFeatured,
+      isAvailable: form.isAvailable,
+      options: optionsFromText(form.optionsText),
+    };
+    try {
+      if (editing) await api.updateMenu(editing._id, body);
+      else await api.createMenu(id, body);
+      setOpen(false);
+      await load();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "Lưu món thất bại");
+    }
   };
 
   const remove = async (item: MenuRow) => {
@@ -70,14 +117,68 @@ export function MenuPage() {
           </Link>
           <h1>Menu · {restaurantName}</h1>
         </div>
+        <button type="button" className="btn primary" onClick={openCreate}>
+          + Thêm món
+        </button>
       </header>
       {error && <p className="error">{error}</p>}
 
       <section className="panel">
-        <h2>Thêm món</h2>
-        <form className="form-grid" onSubmit={onCreate}>
+        <table>
+          <thead>
+            <tr>
+              <th>Món</th>
+              <th>Nhóm</th>
+              <th>Giá</th>
+              <th>Nổi bật</th>
+              <th>Có bán</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {items.map((item) => (
+              <tr key={item._id}>
+                <td>
+                  <strong>{item.name}</strong>
+                  {item.description ? (
+                    <div className="muted small">{item.description}</div>
+                  ) : null}
+                </td>
+                <td>{item.menuSection}</td>
+                <td>{formatVnd(item.price)}</td>
+                <td>{item.isFeatured ? "Có" : "—"}</td>
+                <td>{item.isAvailable === false ? "Ẩn" : "Đang bán"}</td>
+                <td className="actions">
+                  <button
+                    type="button"
+                    className="btn ghost dark"
+                    onClick={() => openEdit(item)}
+                  >
+                    Sửa
+                  </button>
+                  <button
+                    type="button"
+                    className="btn danger"
+                    onClick={() => remove(item)}
+                  >
+                    Xoá
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+
+      <Modal
+        open={open}
+        title={editing ? "Sửa món" : "Thêm món"}
+        onClose={() => setOpen(false)}
+        wide
+      >
+        <form className="form-grid" onSubmit={onSave}>
           <label>
-            Tên món *
+            Tên *
             <input
               required
               value={form.name}
@@ -109,10 +210,10 @@ export function MenuPage() {
             </select>
           </label>
           <label>
-            Ảnh (URL)
+            Sort
             <input
-              value={form.image}
-              onChange={(e) => setForm({ ...form, image: e.target.value })}
+              value={form.sortOrder}
+              onChange={(e) => setForm({ ...form, sortOrder: e.target.value })}
             />
           </label>
           <label className="span-2">
@@ -124,57 +225,51 @@ export function MenuPage() {
               }
             />
           </label>
+          <label className="span-2">
+            Ảnh URL
+            <input
+              value={form.image}
+              onChange={(e) => setForm({ ...form, image: e.target.value })}
+            />
+          </label>
+          <label className="span-2">
+            Options (mỗi dòng: Tên|Giá)
+            <textarea
+              rows={3}
+              value={form.optionsText}
+              onChange={(e) =>
+                setForm({ ...form, optionsText: e.target.value })
+              }
+              placeholder={"Thêm trứng|10000\nÍt đường|0"}
+            />
+          </label>
+          <div className="checks span-2">
+            <label className="check">
+              <input
+                type="checkbox"
+                checked={form.isFeatured}
+                onChange={(e) =>
+                  setForm({ ...form, isFeatured: e.target.checked })
+                }
+              />
+              Nổi bật
+            </label>
+            <label className="check">
+              <input
+                type="checkbox"
+                checked={form.isAvailable}
+                onChange={(e) =>
+                  setForm({ ...form, isAvailable: e.target.checked })
+                }
+              />
+              Đang bán
+            </label>
+          </div>
           <button className="btn primary" type="submit">
-            Thêm món
+            Lưu
           </button>
         </form>
-      </section>
-
-      <section className="panel">
-        <table>
-          <thead>
-            <tr>
-              <th>Món</th>
-              <th>Nhóm</th>
-              <th>Giá</th>
-              <th>Có bán</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {items.map((item) => (
-              <tr key={item._id}>
-                <td>
-                  <strong>{item.name}</strong>
-                  {item.description ? (
-                    <div className="muted small">{item.description}</div>
-                  ) : null}
-                </td>
-                <td>{item.menuSection}</td>
-                <td>{formatVnd(item.price)}</td>
-                <td>
-                  <button
-                    type="button"
-                    className="btn ghost"
-                    onClick={() => toggleAvailable(item)}
-                  >
-                    {item.isAvailable ? "Đang bán" : "Ẩn"}
-                  </button>
-                </td>
-                <td>
-                  <button
-                    type="button"
-                    className="btn danger"
-                    onClick={() => remove(item)}
-                  >
-                    Xoá
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
+      </Modal>
     </div>
   );
 }

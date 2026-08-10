@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { api, type RestaurantRow } from "../api";
+import { Modal } from "../components/Modal";
 
 const empty = {
   name: "",
@@ -12,6 +13,9 @@ const empty = {
   lng: "105.788",
   priceLevel: "$",
   openingHours: "08:00 - 22:00",
+  tags: "",
+  deliveryTimeMin: "20",
+  deliveryTimeMax: "30",
   hasFreeShip: false,
   isPopular: false,
   isOpen: true,
@@ -19,13 +23,15 @@ const empty = {
 
 export function RestaurantsPage() {
   const [list, setList] = useState<RestaurantRow[]>([]);
+  const [q, setQ] = useState("");
   const [form, setForm] = useState(empty);
+  const [openCreate, setOpenCreate] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
 
-  const load = () =>
+  const load = (query = q) =>
     api
-      .restaurants()
+      .restaurants(query)
       .then(setList)
       .catch((err) =>
         setError(err instanceof Error ? err.message : "Lỗi tải quán"),
@@ -44,8 +50,12 @@ export function RestaurantsPage() {
         ...form,
         lat: Number(form.lat),
         lng: Number(form.lng),
+        deliveryTimeMin: Number(form.deliveryTimeMin),
+        deliveryTimeMax: Number(form.deliveryTimeMax),
+        tags: form.tags,
       });
       setForm(empty);
+      setOpenCreate(false);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Tạo quán thất bại");
@@ -69,12 +79,83 @@ export function RestaurantsPage() {
     <div className="page">
       <header className="page-head">
         <h1>Cửa hàng</h1>
-        <span className="muted">{list.length} quán</span>
+        <div className="row">
+          <input
+            placeholder="Tìm quán..."
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && load()}
+          />
+          <button type="button" className="btn ghost dark" onClick={() => load()}>
+            Tìm
+          </button>
+          <button
+            type="button"
+            className="btn primary"
+            onClick={() => setOpenCreate(true)}
+          >
+            + Thêm quán
+          </button>
+        </div>
       </header>
       {error && <p className="error">{error}</p>}
 
       <section className="panel">
-        <h2>Thêm quán mới</h2>
+        <table>
+          <thead>
+            <tr>
+              <th>Tên</th>
+              <th>Địa chỉ</th>
+              <th>Món</th>
+              <th>Mở</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody>
+            {list.map((r) => (
+              <tr key={r._id}>
+                <td>
+                  <strong>{r.name}</strong>
+                  <div className="muted small">
+                    {(r.tags || []).join(" · ")}
+                  </div>
+                </td>
+                <td className="muted">
+                  {[r.address, r.district, r.city].filter(Boolean).join(", ")}
+                </td>
+                <td>{r.menuCount ?? 0}</td>
+                <td>
+                  <button
+                    type="button"
+                    className="btn ghost dark"
+                    onClick={() => toggleOpen(r)}
+                  >
+                    {r.isOpen ? "Đang mở" : "Đóng"}
+                  </button>
+                </td>
+                <td className="actions">
+                  <Link to={`/restaurants/${r._id}`}>Sửa</Link>
+                  <Link to={`/restaurants/${r._id}/menu`}>Menu</Link>
+                  <button
+                    type="button"
+                    className="btn danger"
+                    onClick={() => remove(r)}
+                  >
+                    Xoá
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </section>
+
+      <Modal
+        open={openCreate}
+        title="Thêm quán mới"
+        onClose={() => setOpenCreate(false)}
+        wide
+      >
         <form className="form-grid" onSubmit={onCreate}>
           <label>
             Tên quán *
@@ -82,6 +163,13 @@ export function RestaurantsPage() {
               required
               value={form.name}
               onChange={(e) => setForm({ ...form, name: e.target.value })}
+            />
+          </label>
+          <label>
+            Tags (phẩy)
+            <input
+              value={form.tags}
+              onChange={(e) => setForm({ ...form, tags: e.target.value })}
             />
           </label>
           <label>
@@ -106,6 +194,13 @@ export function RestaurantsPage() {
             />
           </label>
           <label>
+            Ảnh cover
+            <input
+              value={form.coverImage}
+              onChange={(e) => setForm({ ...form, coverImage: e.target.value })}
+            />
+          </label>
+          <label>
             Lat
             <input
               value={form.lat}
@@ -119,23 +214,7 @@ export function RestaurantsPage() {
               onChange={(e) => setForm({ ...form, lng: e.target.value })}
             />
           </label>
-          <label>
-            Ảnh cover (URL)
-            <input
-              value={form.coverImage}
-              onChange={(e) => setForm({ ...form, coverImage: e.target.value })}
-            />
-          </label>
-          <label>
-            Giờ mở cửa
-            <input
-              value={form.openingHours}
-              onChange={(e) =>
-                setForm({ ...form, openingHours: e.target.value })
-              }
-            />
-          </label>
-          <div className="checks">
+          <div className="checks span-2">
             <label className="check">
               <input
                 type="checkbox"
@@ -158,56 +237,10 @@ export function RestaurantsPage() {
             </label>
           </div>
           <button className="btn primary" type="submit" disabled={saving}>
-            {saving ? "..." : "Thêm quán"}
+            {saving ? "..." : "Tạo quán"}
           </button>
         </form>
-      </section>
-
-      <section className="panel">
-        <table>
-          <thead>
-            <tr>
-              <th>Tên</th>
-              <th>Địa chỉ</th>
-              <th>Món</th>
-              <th>Mở</th>
-              <th></th>
-            </tr>
-          </thead>
-          <tbody>
-            {list.map((r) => (
-              <tr key={r._id}>
-                <td>
-                  <strong>{r.name}</strong>
-                </td>
-                <td className="muted">
-                  {[r.address, r.district, r.city].filter(Boolean).join(", ")}
-                </td>
-                <td>{r.menuCount ?? 0}</td>
-                <td>
-                  <button
-                    type="button"
-                    className="btn ghost"
-                    onClick={() => toggleOpen(r)}
-                  >
-                    {r.isOpen ? "Đang mở" : "Đóng"}
-                  </button>
-                </td>
-                <td className="actions">
-                  <Link to={`/restaurants/${r._id}/menu`}>Menu</Link>
-                  <button
-                    type="button"
-                    className="btn danger"
-                    onClick={() => remove(r)}
-                  >
-                    Xoá
-                  </button>
-                </td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </section>
+      </Modal>
     </div>
   );
 }

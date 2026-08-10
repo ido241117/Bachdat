@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Link } from "react-router-dom";
 import { api, formatVnd, type OrderRow } from "../api";
 
 const STATUSES = [
@@ -13,12 +14,13 @@ const STATUSES = [
 
 export function OrdersPage() {
   const [status, setStatus] = useState("all");
+  const [q, setQ] = useState("");
   const [orders, setOrders] = useState<OrderRow[]>([]);
   const [error, setError] = useState<string | null>(null);
 
   const load = () =>
     api
-      .orders(status)
+      .orders({ status, q })
       .then(setOrders)
       .catch((err) =>
         setError(err instanceof Error ? err.message : "Lỗi tải đơn"),
@@ -37,13 +39,24 @@ export function OrdersPage() {
     <div className="page">
       <header className="page-head">
         <h1>Đơn hàng</h1>
-        <select value={status} onChange={(e) => setStatus(e.target.value)}>
-          {STATUSES.map((s) => (
-            <option key={s} value={s}>
-              {s}
-            </option>
-          ))}
-        </select>
+        <div className="row">
+          <input
+            placeholder="Tìm quán / địa chỉ / voucher..."
+            value={q}
+            onChange={(e) => setQ(e.target.value)}
+            onKeyDown={(e) => e.key === "Enter" && load()}
+          />
+          <select value={status} onChange={(e) => setStatus(e.target.value)}>
+            {STATUSES.map((s) => (
+              <option key={s} value={s}>
+                {s}
+              </option>
+            ))}
+          </select>
+          <button type="button" className="btn ghost dark" onClick={load}>
+            Lọc
+          </button>
+        </div>
       </header>
       {error && <p className="error">{error}</p>}
 
@@ -56,7 +69,7 @@ export function OrdersPage() {
               <th>Tổng</th>
               <th>Trạng thái</th>
               <th>Thời gian</th>
-              <th>Cập nhật</th>
+              <th></th>
             </tr>
           </thead>
           <tbody>
@@ -75,10 +88,6 @@ export function OrdersPage() {
                 </td>
                 <td>{formatVnd(o.total)}</td>
                 <td>
-                  <span className={`badge ${o.status}`}>{o.status}</span>
-                </td>
-                <td>{new Date(o.createdAt).toLocaleString("vi-VN")}</td>
-                <td>
                   <select
                     value={o.status}
                     onChange={(e) => update(o._id, e.target.value)}
@@ -89,6 +98,10 @@ export function OrdersPage() {
                       </option>
                     ))}
                   </select>
+                </td>
+                <td>{new Date(o.createdAt).toLocaleString("vi-VN")}</td>
+                <td>
+                  <Link to={`/orders/${o._id}`}>Chi tiết</Link>
                 </td>
               </tr>
             ))}
