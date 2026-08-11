@@ -11,6 +11,8 @@ import type {
   HomeResponse,
   MenuResponse,
   LoginResult,
+  ReviewsResponse,
+  ApiReview,
 } from './types';
 
 export const authApi = {
@@ -48,6 +50,16 @@ export const restaurantApi = {
       location?: { type: string; coordinates: [number, number] };
       address?: string;
     }>(`/restaurants/${id}`),
+};
+
+export const reviewsApi = {
+  list: (restaurantId: string, page = 1) =>
+    api<ReviewsResponse>(`/restaurants/${restaurantId}/reviews?page=${page}`),
+  create: (restaurantId: string, body: { orderId: string; rating: number; comment?: string }) =>
+    api<ApiReview>(`/restaurants/${restaurantId}/reviews`, {
+      method: 'POST',
+      body: JSON.stringify(body),
+    }),
 };
 
 export type TrackingStep = {

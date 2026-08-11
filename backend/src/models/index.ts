@@ -6,3 +6,4 @@ export { Banner } from "./Banner";
 export { Voucher } from "./Voucher";
 export { Order } from "./Order";
 export { Cart } from "./Cart";
+export { Review } from "./Review";

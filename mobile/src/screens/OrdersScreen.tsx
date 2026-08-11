@@ -16,6 +16,7 @@ import { formatPrice } from '../api/format';
 import { ordersApi } from '../api';
 import { mapOrder } from '../api/mappers';
 import { TopAppBar } from '../components/TopAppBar';
+import { ReviewModal } from '../components/ReviewModal';
 import { useAuth } from '../context/AuthContext';
 import { useCart, type CartLine } from '../context/CartContext';
 
@@ -55,6 +56,7 @@ export function OrdersScreen({ onTrack, onGoCart }: Props) {
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [reviewOrder, setReviewOrder] = useState<Order | null>(null);
 
   const load = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true);
@@ -232,6 +234,18 @@ export function OrdersScreen({ onTrack, onGoCart }: Props) {
                           <Text style={styles.outlineBtnText}>Đặt lại</Text>
                         </TouchableOpacity>
                       )}
+                      {order.status === 'completed' && order.restaurantId && (
+                        order.reviewed ? (
+                          <Text style={styles.reviewedText}>Đã đánh giá</Text>
+                        ) : (
+                          <TouchableOpacity
+                            style={styles.reviewBtn}
+                            onPress={() => setReviewOrder(order)}
+                          >
+                            <Text style={styles.reviewBtnText}>Đánh giá</Text>
+                          </TouchableOpacity>
+                        )
+                      )}
                       {canCancel && (
                         <TouchableOpacity
                           style={styles.cancelLink}
@@ -247,6 +261,24 @@ export function OrdersScreen({ onTrack, onGoCart }: Props) {
             })
           )}
         </ScrollView>
+      )}
+
+      {reviewOrder && reviewOrder.restaurantId && (
+        <ReviewModal
+          visible
+          restaurantId={reviewOrder.restaurantId}
+          restaurantName={reviewOrder.restaurantName}
+          orderId={reviewOrder.id}
+          onClose={() => setReviewOrder(null)}
+          onSubmitted={() => {
+            setHistoryOrders((prev) =>
+              prev.map((o) =>
+                o.id === reviewOrder.id ? { ...o, reviewed: true } : o,
+              ),
+            );
+            setReviewOrder(null);
+          }}
+        />
       )}
     </View>
   );
@@ -339,4 +371,13 @@ const styles = StyleSheet.create({
   outlineBtnText: { color: Colors.primary, fontWeight: '700', fontSize: 13 },
   cancelLink: { paddingHorizontal: 4 },
   cancelText: { color: Colors.error, fontSize: 12, fontWeight: '600' },
+  reviewBtn: {
+    borderWidth: 1,
+    borderColor: Colors.yellow,
+    paddingHorizontal: 14,
+    paddingVertical: 8,
+    borderRadius: 999,
+  },
+  reviewBtnText: { color: Colors.onSurface, fontWeight: '700', fontSize: 13 },
+  reviewedText: { color: Colors.secondary, fontSize: 12, fontWeight: '600' },
 });

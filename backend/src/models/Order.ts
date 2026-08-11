@@ -69,6 +69,7 @@ const orderSchema = new Schema(
     note: { type: String, default: "" },
     deliveredAt: { type: Date },
     trackingSteps: { type: [trackingStepSchema], default: [] },
+    reviewed: { type: Boolean, default: false },
   },
   { timestamps: true }
 );

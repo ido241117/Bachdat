@@ -100,6 +100,7 @@ export function mapOrder(o: ApiOrder & { restaurantId?: string }): Order {
     image: o.restaurantImage,
     apiStatus: o.status,
     restaurantId: o.restaurantId,
+    reviewed: o.reviewed,
   };
 }
 

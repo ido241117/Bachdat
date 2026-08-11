@@ -9,8 +9,9 @@ import {
   Category,
   Voucher,
   Banner,
+  Review,
 } from "../models";
-import { slugify } from "../utils/helpers";
+import { slugify, recomputeRestaurantRating } from "../utils/helpers";
 
 const router = Router();
 router.use(requireAdmin);
@@ -557,6 +558,28 @@ router.delete("/banners/:id", async (req: AuthRequest, res: Response) => {
   if (!oid(id)) return res.status(400).json({ error: "ID không hợp lệ" });
   const deleted = await Banner.findByIdAndDelete(id);
   if (!deleted) return res.status(404).json({ error: "Không tìm thấy" });
+  res.json({ ok: true });
+});
+
+// ——— Reviews (kiểm duyệt) ———
+router.get("/reviews", async (req, res) => {
+  const { restaurantId, limit = "50" } = req.query as Record<string, string>;
+  const filter: Record<string, unknown> = {};
+  if (restaurantId && oid(restaurantId)) filter.restaurantId = restaurantId;
+  const list = await Review.find(filter)
+    .sort({ createdAt: -1 })
+    .limit(Math.min(Number(limit) || 50, 200))
+    .lean();
+  res.json(list);
+});
+
+router.delete("/reviews/:id", async (req: AuthRequest, res: Response) => {
+  const { id } = req.params;
+  if (!oid(id)) return res.status(400).json({ error: "ID không hợp lệ" });
+  const deleted = await Review.findByIdAndDelete(id);
+  if (!deleted) return res.status(404).json({ error: "Không tìm thấy" });
+  await Order.findByIdAndUpdate(deleted.orderId, { reviewed: false });
+  await recomputeRestaurantRating(deleted.restaurantId);
   res.json({ ok: true });
 });
 

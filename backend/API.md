@@ -181,6 +181,20 @@ List quán (có `distanceKm`).
 | `category` | `menuSection` (`featured` \| `mains` \| `drinks` \| `desserts`) |
 | options | `options[]` → `{ name, price }` |
 
+### Đánh giá quán (Review)
+
+`GET /restaurants/:id/reviews?page=&limit=` — public, phân trang.
+```json
+{ "reviews": [ { "_id": "...", "userName": "Minh Anh", "userAvatar": "", "rating": 5, "comment": "Ngon!", "createdAt": "..." } ], "total": 12, "page": 1, "pages": 2 }
+```
+
+`POST /restaurants/:id/reviews` (auth) — chỉ cho phép khi có đơn `completed` tại đúng quán này và đơn đó chưa được đánh giá (`order.reviewed === false`).
+```json
+// body
+{ "orderId": "<ObjectId đơn đã completed>", "rating": 5, "comment": "Ngon, giao nhanh" }
+```
+Server tự cập nhật lại `Restaurant.rating` (trung bình) và `Restaurant.reviewCount` sau mỗi lần tạo/xoá review. `Order.reviewed` chuyển `true` sau khi đánh giá — client dùng field này để ẩn nút "Đánh giá".
+
 ---
 
 ## 5. User / Hồ sơ

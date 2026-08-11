@@ -132,6 +132,23 @@ export type ApiOrder = {
     lng?: number;
   };
   trackingSteps?: { key: string; label: string; done: boolean; at?: string }[];
+  reviewed?: boolean;
+};
+
+export type ApiReview = {
+  _id: string;
+  userName: string;
+  userAvatar?: string;
+  rating: number;
+  comment: string;
+  createdAt: string;
+};
+
+export type ReviewsResponse = {
+  reviews: ApiReview[];
+  total: number;
+  page: number;
+  pages: number;
 };
 
 export type ApiVoucher = {

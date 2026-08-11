@@ -10,6 +10,7 @@ export interface Order {
   image: string;
   apiStatus: string;
   restaurantId?: string;
+  reviewed?: boolean;
 }
 
 export const STATUS_LABELS: Record<OrderStatus, string> = {

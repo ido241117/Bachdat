@@ -17,9 +17,10 @@ import { MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../constants/colors';
 import { Restaurant, MenuItem, MENU_CATEGORIES } from '../data/restaurants';
-import { formatPrice } from '../api/format';
-import { restaurantApi } from '../api';
+import { formatPrice, formatOrderDate } from '../api/format';
+import { restaurantApi, reviewsApi } from '../api';
 import { mapMenuItem } from '../api/mappers';
+import type { ApiReview } from '../api/types';
 import { useCart } from '../context/CartContext';
 
 interface Props {
@@ -48,6 +49,11 @@ export function RestaurantDetailScreen({
   const [search, setSearch] = useState('');
   const [selected, setSelected] = useState<MenuItem | null>(null);
   const [sheetQty, setSheetQty] = useState(1);
+  const [reviews, setReviews] = useState<ApiReview[]>([]);
+  const [reviewsTotal, setReviewsTotal] = useState(0);
+  const [reviewsPage, setReviewsPage] = useState(1);
+  const [reviewsPages, setReviewsPages] = useState(1);
+  const [reviewsLoading, setReviewsLoading] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -73,6 +79,25 @@ export function RestaurantDetailScreen({
     return () => {
       cancelled = true;
     };
+  }, [restaurant.id]);
+
+  const loadReviews = async (page = 1) => {
+    setReviewsLoading(true);
+    try {
+      const res = await reviewsApi.list(restaurant.id, page);
+      setReviews((prev) => (page === 1 ? res.reviews : [...prev, ...res.reviews]));
+      setReviewsTotal(res.total);
+      setReviewsPage(res.page);
+      setReviewsPages(res.pages);
+    } catch {
+      // ignore — không chặn trang chi tiết quán vì lỗi tải review
+    } finally {
+      setReviewsLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    loadReviews(1);
   }, [restaurant.id]);
 
   const visibleCats = useMemo(
@@ -271,6 +296,60 @@ export function RestaurantDetailScreen({
               </TouchableOpacity>
             );
           })}
+
+          <View style={styles.reviewsSection}>
+            <Text style={styles.reviewsTitle}>
+              Đánh giá {reviewsTotal > 0 ? `(${reviewsTotal})` : ''}
+            </Text>
+            {reviews.length === 0 && !reviewsLoading ? (
+              <Text style={styles.reviewsEmpty}>Chưa có đánh giá nào</Text>
+            ) : (
+              reviews.map((r) => (
+                <View key={r._id} style={styles.reviewCard}>
+                  <View style={styles.reviewHeader}>
+                    <Image
+                      source={{
+                        uri:
+                          r.userAvatar ||
+                          'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200',
+                      }}
+                      style={styles.reviewAvatar}
+                    />
+                    <View style={styles.reviewHeaderInfo}>
+                      <Text style={styles.reviewName}>{r.userName}</Text>
+                      <View style={styles.reviewStars}>
+                        {[1, 2, 3, 4, 5].map((n) => (
+                          <MaterialIcons
+                            key={n}
+                            name={n <= r.rating ? 'star' : 'star-border'}
+                            size={14}
+                            color={Colors.yellow}
+                          />
+                        ))}
+                      </View>
+                    </View>
+                    <Text style={styles.reviewDate}>{formatOrderDate(r.createdAt)}</Text>
+                  </View>
+                  {r.comment ? (
+                    <Text style={styles.reviewComment}>{r.comment}</Text>
+                  ) : null}
+                </View>
+              ))
+            )}
+            {reviewsPage < reviewsPages && (
+              <TouchableOpacity
+                style={styles.reviewsMoreBtn}
+                onPress={() => loadReviews(reviewsPage + 1)}
+                disabled={reviewsLoading}
+              >
+                {reviewsLoading ? (
+                  <ActivityIndicator color={Colors.primary} />
+                ) : (
+                  <Text style={styles.reviewsMoreText}>Xem thêm đánh giá</Text>
+                )}
+              </TouchableOpacity>
+            )}
+          </View>
         </ScrollView>
       )}
 
@@ -501,4 +580,22 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   sheetBtnText: { color: Colors.white, fontWeight: '700', fontSize: 16 },
+  reviewsSection: { marginTop: 8, gap: 10 },
+  reviewsTitle: { fontSize: 16, fontWeight: '700', color: Colors.onSurface },
+  reviewsEmpty: { fontSize: 13, color: Colors.secondary, paddingVertical: 8 },
+  reviewCard: {
+    backgroundColor: Colors.white,
+    borderRadius: 12,
+    padding: 12,
+    gap: 6,
+  },
+  reviewHeader: { flexDirection: 'row', alignItems: 'center', gap: 10 },
+  reviewAvatar: { width: 36, height: 36, borderRadius: 18 },
+  reviewHeaderInfo: { flex: 1, gap: 2 },
+  reviewName: { fontSize: 13, fontWeight: '700', color: Colors.onSurface },
+  reviewStars: { flexDirection: 'row', gap: 1 },
+  reviewDate: { fontSize: 11, color: Colors.textLight },
+  reviewComment: { fontSize: 13, color: Colors.onSurfaceVariant, lineHeight: 18 },
+  reviewsMoreBtn: { alignItems: 'center', paddingVertical: 10 },
+  reviewsMoreText: { color: Colors.primary, fontWeight: '700', fontSize: 13 },
 });

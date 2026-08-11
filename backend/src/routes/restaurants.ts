@@ -1,7 +1,8 @@
 import { Router } from "express";
 import { Types } from "mongoose";
-import { Restaurant, MenuItem, Category } from "../models";
-import { haversineKm } from "../utils/helpers";
+import { Restaurant, MenuItem, Category, Review, Order } from "../models";
+import { haversineKm, recomputeRestaurantRating } from "../utils/helpers";
+import { requireAuth, AuthRequest } from "../middleware/auth";
 
 const router = Router();
 
@@ -96,6 +97,83 @@ router.get("/:id/menu", async (req, res) => {
     sections: grouped,
     items,
   });
+});
+
+router.get("/:id/reviews", async (req, res) => {
+  const { id } = req.params;
+  if (!Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ error: "ID không hợp lệ" });
+  }
+  const page = Math.max(1, Number(req.query.page) || 1);
+  const limit = Math.min(50, Math.max(1, Number(req.query.limit) || 10));
+
+  const [reviews, total] = await Promise.all([
+    Review.find({ restaurantId: id })
+      .sort({ createdAt: -1 })
+      .skip((page - 1) * limit)
+      .limit(limit)
+      .lean(),
+    Review.countDocuments({ restaurantId: id }),
+  ]);
+
+  res.json({ reviews, total, page, pages: Math.max(1, Math.ceil(total / limit)) });
+});
+
+router.post("/:id/reviews", requireAuth, async (req: AuthRequest, res) => {
+  const { id } = req.params;
+  if (!Types.ObjectId.isValid(id)) {
+    return res.status(400).json({ error: "ID không hợp lệ" });
+  }
+
+  const { orderId, rating, comment } = req.body as {
+    orderId?: string;
+    rating?: number;
+    comment?: string;
+  };
+
+  if (!orderId || !Types.ObjectId.isValid(orderId)) {
+    return res.status(400).json({ error: "Thiếu orderId" });
+  }
+  const ratingNum = Number(rating);
+  if (!Number.isFinite(ratingNum) || ratingNum < 1 || ratingNum > 5) {
+    return res.status(400).json({ error: "Rating phải từ 1 đến 5" });
+  }
+
+  const order = await Order.findOne({ _id: orderId, userId: req.userId });
+  if (!order) {
+    return res.status(404).json({ error: "Không tìm thấy đơn hàng" });
+  }
+  if (String(order.restaurantId) !== id) {
+    return res.status(400).json({ error: "Đơn hàng không thuộc quán này" });
+  }
+  if (order.status !== "completed") {
+    return res.status(400).json({ error: "Chỉ có thể đánh giá đơn đã hoàn thành" });
+  }
+  if (order.reviewed) {
+    return res.status(400).json({ error: "Đơn hàng này đã được đánh giá" });
+  }
+
+  const user = req.user!;
+  let review;
+  try {
+    review = await Review.create({
+      userId: req.userId,
+      userName: user.name,
+      userAvatar: user.avatar,
+      restaurantId: id,
+      orderId,
+      rating: ratingNum,
+      comment: (comment || "").trim().slice(0, 1000),
+    });
+  } catch {
+    return res.status(400).json({ error: "Đơn hàng này đã được đánh giá" });
+  }
+
+  order.reviewed = true;
+  await order.save();
+  await recomputeRestaurantRating(id);
+
+  res.status(201).json(review);
 });
 
 export default router;

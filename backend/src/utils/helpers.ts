@@ -1,3 +1,19 @@
+import { Types } from "mongoose";
+import { Review, Restaurant } from "../models";
+
+export async function recomputeRestaurantRating(
+  restaurantId: string | Types.ObjectId
+) {
+  const [agg] = await Review.aggregate([
+    { $match: { restaurantId: new Types.ObjectId(restaurantId) } },
+    { $group: { _id: null, avg: { $avg: "$rating" }, count: { $sum: 1 } } },
+  ]);
+  await Restaurant.findByIdAndUpdate(restaurantId, {
+    rating: agg ? Math.round(agg.avg * 10) / 10 : 0,
+    reviewCount: agg ? agg.count : 0,
+  });
+}
+
 export function slugify(text: string): string {
   return text
     .toLowerCase()

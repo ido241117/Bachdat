@@ -10,8 +10,13 @@ import {
   Voucher,
   Order,
   Cart,
+  Review,
 } from "./models";
-import { slugify, defaultTrackingSteps } from "./utils/helpers";
+import {
+  slugify,
+  defaultTrackingSteps,
+  recomputeRestaurantRating,
+} from "./utils/helpers";
 
 async function seed() {
   await mongoose.connect(env.mongoUri);
@@ -26,6 +31,7 @@ async function seed() {
     Voucher.deleteMany({}),
     Order.deleteMany({}),
     Cart.deleteMany({}),
+    Review.deleteMany({}),
   ]);
 
   const categories = await Category.insertMany([
@@ -476,7 +482,7 @@ async function seed() {
     trackingSteps: defaultTrackingSteps("delivering"),
   });
 
-  await Order.create({
+  const completedOrder = await Order.create({
     userId: user._id,
     restaurantId: chickenKing._id,
     restaurantName: chickenKing.name,
@@ -505,7 +511,19 @@ async function seed() {
     voucherCode: "GIAM30K",
     deliveredAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000),
     trackingSteps: defaultTrackingSteps("completed"),
+    reviewed: true,
   });
+
+  await Review.create({
+    userId: user._id,
+    userName: user.name,
+    userAvatar: user.avatar,
+    restaurantId: chickenKing._id,
+    orderId: completedOrder._id,
+    rating: 5,
+    comment: "Gà rán giòn, giao nhanh, sẽ đặt lại!",
+  });
+  await recomputeRestaurantRating(chickenKing._id);
 
   console.log("\n✅ Seed xong!");
   console.log("Demo user: phone=0901234567  OTP=123456");
