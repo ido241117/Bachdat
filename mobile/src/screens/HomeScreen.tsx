@@ -49,7 +49,7 @@ export function HomeScreen({
   onAddressPress,
 }: Props) {
   const { itemCount, subtotal } = useCart();
-  const { location } = useDeliveryLocation();
+  const { location, ready: locationReady } = useDeliveryLocation();
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -59,7 +59,7 @@ export function HomeScreen({
     { id: string; name: string; icon: string; slug: string }[]
   >([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
-  const [sort, setSort] = useState<SortKey>('popular');
+  const [sort, setSort] = useState<SortKey>('near');
   const [freeShipOnly, setFreeShipOnly] = useState(false);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
 
@@ -67,13 +67,14 @@ export function HomeScreen({
     location?.fullAddress || location?.label || 'Chọn địa chỉ giao hàng';
 
   useEffect(() => {
+    if (!locationReady) return;
     let cancelled = false;
 
     (async () => {
       try {
         setLoading(true);
         setError(null);
-        const data = await homeApi.get();
+        const data = await homeApi.get(location?.lat, location?.lng);
         if (cancelled) return;
         setBanners(data.banners);
         setCategories(data.categories.map(mapCategory));
@@ -90,7 +91,7 @@ export function HomeScreen({
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [locationReady, location?.lat, location?.lng]);
 
   const filtered = useMemo(() => {
     let list = [...restaurants];
@@ -117,10 +118,7 @@ export function HomeScreen({
     if (freeShipOnly) list = list.filter((r) => r.freeship);
     if (sort === 'rating') list.sort((a, b) => b.rating - a.rating);
     if (sort === 'near') {
-      list.sort(
-        (a, b) =>
-          parseFloat(a.distance) - parseFloat(b.distance) || 0,
-      );
+      list.sort((a, b) => (a.distanceKm ?? 999) - (b.distanceKm ?? 999));
     }
     if (sort === 'popular') {
       list.sort((a, b) => Number(!!b.popular) - Number(!!a.popular));
@@ -271,8 +269,8 @@ export function HomeScreen({
           >
             {(
               [
+                { key: 'near', label: 'Gần tôi' },
                 { key: 'popular', label: 'Phổ biến' },
-                { key: 'near', label: 'Gần nhất' },
                 { key: 'rating', label: 'Đánh giá' },
               ] as const
             ).map((opt) => (

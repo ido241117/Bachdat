@@ -107,7 +107,8 @@ export const vouchersApi = {
     api<{
       valid: boolean;
       discount: number;
-      message: string;
+      message?: string;
+      error?: string;
     }>('/vouchers/validate', {
       method: 'POST',
       body: JSON.stringify({ code, subtotal, deliveryFee }),

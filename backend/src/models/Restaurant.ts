@@ -14,11 +14,11 @@ const restaurantSchema = new Schema(
     deliveryTimeMax: { type: Number, default: 30 },
     location: {
       type: { type: String, enum: ["Point"], default: "Point" },
-      coordinates: { type: [Number], default: [106.7009, 10.7769] }, // [lng, lat] Quận 1
+      coordinates: { type: [Number], default: [105.788, 10.045] }, // [lng, lat] Cần Thơ
     },
     address: { type: String, default: "" },
-    district: { type: String, default: "Quận 1" },
-    city: { type: String, default: "TP. Hồ Chí Minh" },
+    district: { type: String, default: "Ninh Kiều" },
+    city: { type: String, default: "Cần Thơ" },
     hasFreeShip: { type: Boolean, default: false },
     isPopular: { type: Boolean, default: false },
     isOpen: { type: Boolean, default: true },

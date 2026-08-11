@@ -148,7 +148,15 @@ router.post("/", requireAuth, async (req: AuthRequest, res) => {
     if (voucher.totalLimit && voucher.usedCount >= voucher.totalLimit) {
       return res.status(400).json({ error: "Voucher đã hết lượt" });
     }
-    discount = calcVoucherDiscount(voucher, subtotal, deliveryFee);
+    if (voucher.type === "cashback") {
+      return res.status(400).json({
+        error: "Mã cashback không trừ tiền đơn (hoàn điểm/tiền sau)",
+      });
+    }
+    discount = calcVoucherDiscount(voucher, subtotal, Number(deliveryFee) || 0);
+    if (discount <= 0) {
+      return res.status(400).json({ error: "Mã không áp dụng được cho đơn này" });
+    }
     voucherId = voucher._id;
     appliedCode = voucher.code;
     voucher.usedCount += 1;

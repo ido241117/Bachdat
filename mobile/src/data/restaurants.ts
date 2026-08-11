@@ -17,6 +17,8 @@ export interface Restaurant {
   reviewCount: string;
   deliveryTime: string;
   distance: string;
+  /** Số km để sort “Gần tôi” */
+  distanceKm?: number;
   tags: string[];
   priceLevel: string;
   cuisine: string;

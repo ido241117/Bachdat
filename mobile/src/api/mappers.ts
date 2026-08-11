@@ -71,6 +71,7 @@ export function mapRestaurant(
     reviewCount: formatReviews(r.reviewCount),
     deliveryTime: formatDelivery(r.deliveryTimeMin, r.deliveryTimeMax),
     distance: formatDistance(r.distanceKm ?? 0),
+    distanceKm: r.distanceKm ?? 0,
     tags: r.tags || [],
     priceLevel: r.priceLevel,
     cuisine: (r.tags || []).join(', '),

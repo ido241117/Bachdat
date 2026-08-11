@@ -61,12 +61,17 @@ export function CheckoutScreen({
   const [mapPickerOpen, setMapPickerOpen] = useState(false);
   const [discount, setDiscount] = useState(0);
   const [voucherCode, setVoucherCode] = useState('');
+  const [voucherInput, setVoucherInput] = useState('');
+  const [voucherError, setVoucherError] = useState<string | null>(null);
+  const [voucherMsg, setVoucherMsg] = useState<string | null>(null);
+  const [validating, setValidating] = useState(false);
   const [vouchers, setVouchers] = useState<ApiVoucher[]>([]);
   const [voucherOpen, setVoucherOpen] = useState(false);
   const [note, setNote] = useState('');
 
   const deliveryFee = items.length > 0 ? 15000 : 0;
   const total = Math.max(0, subtotal + deliveryFee - discount);
+  const checkoutVouchers = vouchers.filter((v) => v.type !== 'cashback');
 
   useEffect(() => {
     let cancelled = false;
@@ -117,19 +122,39 @@ export function CheckoutScreen({
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      if (items.length === 0 || !voucherCode) {
+      if (items.length === 0 || !voucherCode.trim()) {
         setDiscount(0);
+        setVoucherError(null);
+        setVoucherMsg(null);
         return;
       }
+      setValidating(true);
       try {
         const result = await vouchersApi.validate(
-          voucherCode,
+          voucherCode.trim(),
           subtotal,
           deliveryFee,
         );
-        if (!cancelled) setDiscount(result.valid ? result.discount : 0);
-      } catch {
-        if (!cancelled) setDiscount(0);
+        if (cancelled) return;
+        if (result.valid) {
+          setDiscount(result.discount || 0);
+          setVoucherError(null);
+          setVoucherMsg(result.message || `Giảm ${formatPrice(result.discount)}`);
+        } else {
+          setDiscount(0);
+          setVoucherError(result.error || 'Không áp dụng được mã này');
+          setVoucherMsg(null);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setDiscount(0);
+          setVoucherError(
+            err instanceof Error ? err.message : 'Không kiểm tra được mã',
+          );
+          setVoucherMsg(null);
+        }
+      } finally {
+        if (!cancelled) setValidating(false);
       }
     })();
     return () => {
@@ -137,6 +162,21 @@ export function CheckoutScreen({
     };
   }, [items.length, subtotal, deliveryFee, voucherCode]);
 
+  const applyCode = (code: string) => {
+    const next = code.trim().toUpperCase();
+    setVoucherInput(next);
+    setVoucherCode(next);
+    setVoucherOpen(false);
+  };
+
+  const clearVoucher = () => {
+    setVoucherCode('');
+    setVoucherInput('');
+    setDiscount(0);
+    setVoucherError(null);
+    setVoucherMsg(null);
+    setVoucherOpen(false);
+  };
   const handlePlaceOrder = async () => {
     if (items.length === 0 || !restaurantId || !address) {
       Alert.alert('Thiếu thông tin', 'Cần địa chỉ giao hàng và món trong giỏ.');
@@ -446,6 +486,15 @@ export function CheckoutScreen({
             </Text>
             <Text style={styles.discountValue}>-{formatPrice(discount)}</Text>
           </View>
+          {validating ? (
+            <Text style={styles.voucherHint}>Đang kiểm tra mã...</Text>
+          ) : null}
+          {voucherMsg ? (
+            <Text style={styles.voucherOk}>{voucherMsg}</Text>
+          ) : null}
+          {voucherError ? (
+            <Text style={styles.voucherFail}>{voucherError}</Text>
+          ) : null}
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Tổng cộng</Text>
             <Text style={styles.totalValue}>{formatPrice(total)}</Text>
@@ -456,11 +505,18 @@ export function CheckoutScreen({
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, 16) }]}>
         <TouchableOpacity
           style={styles.promoBtn}
-          onPress={() => setVoucherOpen(true)}
+          onPress={() => {
+            setVoucherInput(voucherCode);
+            setVoucherOpen(true);
+          }}
         >
           <MaterialIcons name="confirmation-number" size={20} color={Colors.primary} />
           <Text style={styles.promoText}>
-            {voucherCode ? `Mã: ${voucherCode}` : 'Chọn mã giảm giá'}
+            {voucherCode && discount > 0
+              ? `Mã: ${voucherCode} · -${formatPrice(discount)}`
+              : voucherCode
+                ? `Mã: ${voucherCode}`
+                : 'Chọn / nhập mã giảm giá'}
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
@@ -527,28 +583,61 @@ export function CheckoutScreen({
         <Pressable style={styles.modalBackdrop} onPress={() => setVoucherOpen(false)}>
           <Pressable style={styles.sheet} onPress={(e) => e.stopPropagation()}>
             <Text style={styles.sheetTitle}>Mã giảm giá</Text>
-            <TouchableOpacity
-              style={styles.sheetItem}
-              onPress={() => {
-                setVoucherCode('');
-                setVoucherOpen(false);
-              }}
-            >
-              <Text style={styles.sheetItemTitle}>Không dùng mã</Text>
-            </TouchableOpacity>
-            {vouchers.map((v) => (
+
+            <View style={styles.voucherInputRow}>
+              <TextInput
+                style={styles.voucherInput}
+                placeholder="Nhập mã (vd: GIAM15K)"
+                placeholderTextColor={Colors.textLight}
+                autoCapitalize="characters"
+                value={voucherInput}
+                onChangeText={setVoucherInput}
+              />
               <TouchableOpacity
-                key={v._id}
-                style={styles.sheetItem}
+                style={styles.voucherApplyBtn}
                 onPress={() => {
-                  setVoucherCode(v.code);
-                  setVoucherOpen(false);
+                  if (!voucherInput.trim()) {
+                    Alert.alert('Thiếu mã', 'Nhập mã giảm giá trước.');
+                    return;
+                  }
+                  applyCode(voucherInput);
                 }}
               >
-                <Text style={styles.sheetItemTitle}>{v.code}</Text>
-                <Text style={styles.sheetItemSub}>{v.title}</Text>
+                <Text style={styles.voucherApplyText}>Áp dụng</Text>
               </TouchableOpacity>
-            ))}
+            </View>
+
+            <TouchableOpacity style={styles.sheetItem} onPress={clearVoucher}>
+              <Text style={styles.sheetItemTitle}>Không dùng mã</Text>
+            </TouchableOpacity>
+
+            {checkoutVouchers.map((v) => {
+              const tooSmall = subtotal < (v.minOrderAmount || 0);
+              return (
+                <TouchableOpacity
+                  key={v._id}
+                  style={[styles.sheetItem, tooSmall && styles.sheetItemDisabled]}
+                  onPress={() => applyCode(v.code)}
+                >
+                  <Text style={styles.sheetItemTitle}>{v.code}</Text>
+                  <Text style={styles.sheetItemSub}>{v.title}</Text>
+                  <Text style={styles.sheetItemSub}>
+                    {v.description ||
+                      (v.minOrderAmount
+                        ? `Đơn tối thiểu ${formatPrice(v.minOrderAmount)}`
+                        : 'Áp dụng mọi đơn')}
+                  </Text>
+                  {tooSmall ? (
+                    <Text style={styles.voucherFail}>
+                      Chưa đủ đơn tối thiểu {formatPrice(v.minOrderAmount || 0)}
+                    </Text>
+                  ) : null}
+                </TouchableOpacity>
+              );
+            })}
+            {checkoutVouchers.length === 0 ? (
+              <Text style={styles.sheetEmpty}>Chưa có mã giảm giá</Text>
+            ) : null}
           </Pressable>
         </Pressable>
       </Modal>
@@ -678,6 +767,33 @@ const styles = StyleSheet.create({
   summaryText: { fontSize: 14, color: Colors.onSurfaceVariant },
   discountText: { fontSize: 14, color: Colors.primary },
   discountValue: { fontSize: 14, fontWeight: '600', color: Colors.primary },
+  voucherHint: { fontSize: 12, color: Colors.secondary },
+  voucherOk: { fontSize: 12, color: Colors.primary, fontWeight: '600' },
+  voucherFail: { fontSize: 12, color: '#C62828', marginTop: 2 },
+  voucherInputRow: {
+    flexDirection: 'row',
+    gap: 8,
+    marginBottom: 12,
+  },
+  voucherInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderColor: Colors.outlineVariant,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    fontSize: 14,
+    fontWeight: '600',
+    color: Colors.onSurface,
+  },
+  voucherApplyBtn: {
+    backgroundColor: Colors.primary,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    justifyContent: 'center',
+  },
+  voucherApplyText: { color: Colors.white, fontWeight: '700', fontSize: 13 },
+  sheetItemDisabled: { opacity: 0.55 },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -715,7 +831,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     padding: 20,
-    maxHeight: '60%',
+    maxHeight: '72%',
   },
   sheetTitle: { fontSize: 17, fontWeight: '700', marginBottom: 12 },
   sheetItem: {

@@ -142,6 +142,7 @@ export type ApiVoucher = {
   description: string;
   value: number;
   minOrderAmount?: number;
+  maxDiscount?: number;
   expiresAt?: string;
   filterTag: 'freeship' | 'discount' | 'payment';
   almostGone?: boolean;
