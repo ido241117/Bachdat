@@ -109,13 +109,21 @@ export const rewardsApi = {
 };
 
 export const vouchersApi = {
-  list: (filter?: string) => {
-    const qs = filter ? `?filter=${filter}` : '';
-    return api<ApiVoucher[]>(`/vouchers${qs}`);
+  list: (filter?: string, restaurantId?: string) => {
+    const q = new URLSearchParams();
+    if (filter) q.set('filter', filter);
+    if (restaurantId) q.set('restaurantId', restaurantId);
+    const qs = q.toString();
+    return api<ApiVoucher[]>(`/vouchers${qs ? `?${qs}` : ''}`);
   },
   save: (id: string) =>
     api<{ ok: boolean }>(`/vouchers/${id}/save`, { method: 'POST' }),
-  validate: (code: string, subtotal: number, deliveryFee: number) =>
+  validate: (
+    code: string,
+    subtotal: number,
+    deliveryFee: number,
+    restaurantId?: string,
+  ) =>
     api<{
       valid: boolean;
       discount: number;
@@ -123,7 +131,7 @@ export const vouchersApi = {
       error?: string;
     }>('/vouchers/validate', {
       method: 'POST',
-      body: JSON.stringify({ code, subtotal, deliveryFee }),
+      body: JSON.stringify({ code, subtotal, deliveryFee, restaurantId }),
     }),
 };
 

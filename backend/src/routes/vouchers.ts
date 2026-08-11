@@ -1,5 +1,6 @@
 import { Router } from "express";
-import { Voucher } from "../models";
+import { Types } from "mongoose";
+import { Voucher, Restaurant } from "../models";
 import { requireAuth, AuthRequest } from "../middleware/auth";
 
 const router = Router();
@@ -23,8 +24,34 @@ function calcDiscount(
   return 0;
 }
 
+async function restaurantScopeIds(restaurantId?: string) {
+  if (!restaurantId || !Types.ObjectId.isValid(restaurantId)) return null;
+  const restaurant = await Restaurant.findById(restaurantId)
+    .select("categoryIds")
+    .lean();
+  return {
+    categoryIds: (restaurant?.categoryIds || []).map((c) => String(c)),
+  };
+}
+
+function voucherAppliesToRestaurant(
+  voucher: { applicableTo?: string; applicableId?: unknown },
+  restaurantId: string,
+  categoryIds: string[],
+) {
+  if (!voucher.applicableTo || voucher.applicableTo === "all") return true;
+  if (voucher.applicableTo === "restaurant") {
+    return String(voucher.applicableId) === restaurantId;
+  }
+  if (voucher.applicableTo === "category") {
+    return categoryIds.includes(String(voucher.applicableId));
+  }
+  return true;
+}
+
 router.get("/", async (req, res) => {
   const filterTag = req.query.filter as string | undefined;
+  const restaurantId = req.query.restaurantId as string | undefined;
   const query: Record<string, unknown> = {
     isActive: true,
     $or: [
@@ -35,7 +62,15 @@ router.get("/", async (req, res) => {
   };
   if (filterTag) query.filterTag = filterTag;
 
-  const vouchers = await Voucher.find(query).sort({ expiresAt: 1 });
+  let vouchers = await Voucher.find(query).sort({ expiresAt: 1 });
+
+  const scope = await restaurantScopeIds(restaurantId);
+  if (scope) {
+    vouchers = vouchers.filter((v) =>
+      voucherAppliesToRestaurant(v, restaurantId!, scope.categoryIds),
+    );
+  }
+
   res.json(
     vouchers.map((v) => ({
       ...v.toObject(),
@@ -51,10 +86,16 @@ router.get("/", async (req, res) => {
  * tránh Nuốt lỗi khi 400 khiến discount = 0 im lặng.
  */
 router.post("/validate", requireAuth, async (req: AuthRequest, res) => {
-  const { code, subtotal = 0, deliveryFee = 15000 } = req.body as {
+  const {
+    code,
+    subtotal = 0,
+    deliveryFee = 15000,
+    restaurantId,
+  } = req.body as {
     code?: string;
     subtotal?: number;
     deliveryFee?: number;
+    restaurantId?: string;
   };
 
   if (!code?.trim()) {
@@ -76,6 +117,16 @@ router.post("/validate", requireAuth, async (req: AuthRequest, res) => {
       discount: 0,
       error: "Mã không hợp lệ",
     });
+  }
+  if (voucher.applicableTo && voucher.applicableTo !== "all") {
+    const scope = await restaurantScopeIds(restaurantId);
+    if (!scope || !voucherAppliesToRestaurant(voucher, restaurantId!, scope.categoryIds)) {
+      return res.json({
+        valid: false,
+        discount: 0,
+        error: "Mã không áp dụng cho quán này",
+      });
+    }
   }
   if (voucher.expiresAt && voucher.expiresAt < new Date()) {
     return res.json({

@@ -79,7 +79,7 @@ export function CheckoutScreen({
       try {
         const [addrs, voucherList] = await Promise.all([
           userApi.addresses(),
-          vouchersApi.list(),
+          vouchersApi.list(undefined, restaurantId || undefined),
         ]);
         if (cancelled) return;
         setAddresses(addrs);
@@ -134,6 +134,7 @@ export function CheckoutScreen({
           voucherCode.trim(),
           subtotal,
           deliveryFee,
+          restaurantId || undefined,
         );
         if (cancelled) return;
         if (result.valid) {
@@ -160,7 +161,7 @@ export function CheckoutScreen({
     return () => {
       cancelled = true;
     };
-  }, [items.length, subtotal, deliveryFee, voucherCode]);
+  }, [items.length, subtotal, deliveryFee, voucherCode, restaurantId]);
 
   const applyCode = (code: string) => {
     const next = code.trim().toUpperCase();

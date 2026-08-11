@@ -157,6 +157,7 @@ export type VoucherRow = {
   maxDiscount?: number;
   minOrderAmount?: number;
   applicableTo?: string;
+  applicableId?: string;
   totalLimit?: number;
   usedCount?: number;
   expiresAt?: string;

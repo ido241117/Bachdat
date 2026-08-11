@@ -1,5 +1,11 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { api, formatVnd, type VoucherRow } from "../api";
+import {
+  api,
+  formatVnd,
+  type VoucherRow,
+  type RestaurantRow,
+  type CategoryRow,
+} from "../api";
 import { Modal } from "../components/Modal";
 
 const empty = {
@@ -11,6 +17,8 @@ const empty = {
   minOrderAmount: "0",
   totalLimit: "",
   filterTag: "discount",
+  applicableTo: "all",
+  applicableId: "",
   description: "",
   expiresAt: "",
   isActive: true,
@@ -18,6 +26,8 @@ const empty = {
 
 export function VouchersPage() {
   const [list, setList] = useState<VoucherRow[]>([]);
+  const [restaurants, setRestaurants] = useState<RestaurantRow[]>([]);
+  const [categories, setCategories] = useState<CategoryRow[]>([]);
   const [form, setForm] = useState(empty);
   const [editing, setEditing] = useState<VoucherRow | null>(null);
   const [open, setOpen] = useState(false);
@@ -33,7 +43,28 @@ export function VouchersPage() {
 
   useEffect(() => {
     load();
+    api.restaurants().then(setRestaurants).catch(() => {});
+    api.categories().then(setCategories).catch(() => {});
   }, []);
+
+  const scopeLabel = (v: VoucherRow) => {
+    if (!v.applicableTo || v.applicableTo === "all") return "Tất cả quán";
+    if (v.applicableTo === "restaurant") {
+      return (
+        "Quán: " +
+        (restaurants.find((r) => r._id === v.applicableId)?.name ||
+          "(đã xoá)")
+      );
+    }
+    if (v.applicableTo === "category") {
+      return (
+        "Danh mục: " +
+        (categories.find((c) => c._id === v.applicableId)?.name ||
+          "(đã xoá)")
+      );
+    }
+    return "Tất cả quán";
+  };
 
   const openCreate = () => {
     setEditing(null);
@@ -52,6 +83,8 @@ export function VouchersPage() {
       minOrderAmount: String(v.minOrderAmount ?? 0),
       totalLimit: v.totalLimit != null ? String(v.totalLimit) : "",
       filterTag: v.filterTag || "discount",
+      applicableTo: v.applicableTo || "all",
+      applicableId: v.applicableId || "",
       description: v.description || "",
       expiresAt: v.expiresAt ? v.expiresAt.slice(0, 10) : "",
       isActive: v.isActive !== false,
@@ -61,6 +94,10 @@ export function VouchersPage() {
 
   const onSave = async (e: FormEvent) => {
     e.preventDefault();
+    if (form.applicableTo !== "all" && !form.applicableId) {
+      setError("Chọn quán / danh mục áp dụng, hoặc để phạm vi là Tất cả quán");
+      return;
+    }
     const body = {
       code: form.code,
       title: form.title,
@@ -70,6 +107,8 @@ export function VouchersPage() {
       minOrderAmount: Number(form.minOrderAmount || 0),
       totalLimit: form.totalLimit ? Number(form.totalLimit) : undefined,
       filterTag: form.filterTag,
+      applicableTo: form.applicableTo,
+      applicableId: form.applicableTo === "all" ? undefined : form.applicableId,
       description: form.description,
       expiresAt: form.expiresAt || undefined,
       isActive: form.isActive,
@@ -78,6 +117,7 @@ export function VouchersPage() {
       if (editing) await api.updateVoucher(editing._id, body);
       else await api.createVoucher(body);
       setOpen(false);
+      setError(null);
       await load();
     } catch (err) {
       setError(err instanceof Error ? err.message : "Lưu thất bại");
@@ -107,6 +147,7 @@ export function VouchersPage() {
               <th>Tiêu đề</th>
               <th>Loại</th>
               <th>Giá trị</th>
+              <th>Phạm vi</th>
               <th>Đã dùng</th>
               <th>Hết hạn</th>
               <th></th>
@@ -128,6 +169,7 @@ export function VouchersPage() {
                     ? `${v.value}%`
                     : formatVnd(v.value)}
                 </td>
+                <td className="muted small">{scopeLabel(v)}</td>
                 <td>
                   {v.usedCount ?? 0}
                   {v.totalLimit != null ? ` / ${v.totalLimit}` : ""}
@@ -236,6 +278,68 @@ export function VouchersPage() {
               onChange={(e) => setForm({ ...form, expiresAt: e.target.value })}
             />
           </label>
+          <label>
+            Hiện ở tab (app)
+            <select
+              value={form.filterTag}
+              onChange={(e) => setForm({ ...form, filterTag: e.target.value })}
+            >
+              <option value="discount">Giảm giá món</option>
+              <option value="freeship">Freeship</option>
+              <option value="payment">Thanh toán</option>
+            </select>
+          </label>
+          <label>
+            Phạm vi áp dụng
+            <select
+              value={form.applicableTo}
+              onChange={(e) =>
+                setForm({ ...form, applicableTo: e.target.value, applicableId: "" })
+              }
+            >
+              <option value="all">Tất cả quán</option>
+              <option value="restaurant">Chỉ 1 quán</option>
+              <option value="category">Theo danh mục</option>
+            </select>
+          </label>
+          {form.applicableTo === "restaurant" && (
+            <label>
+              Chọn quán *
+              <select
+                required
+                value={form.applicableId}
+                onChange={(e) =>
+                  setForm({ ...form, applicableId: e.target.value })
+                }
+              >
+                <option value="">-- Chọn quán --</option>
+                {restaurants.map((r) => (
+                  <option key={r._id} value={r._id}>
+                    {r.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
+          {form.applicableTo === "category" && (
+            <label>
+              Chọn danh mục *
+              <select
+                required
+                value={form.applicableId}
+                onChange={(e) =>
+                  setForm({ ...form, applicableId: e.target.value })
+                }
+              >
+                <option value="">-- Chọn danh mục --</option>
+                {categories.map((c) => (
+                  <option key={c._id} value={c._id}>
+                    {c.name}
+                  </option>
+                ))}
+              </select>
+            </label>
+          )}
           <label className="span-2">
             Mô tả
             <input

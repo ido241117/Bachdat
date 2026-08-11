@@ -259,8 +259,8 @@ Rule: **1 quán / 1 giỏ** — đổi quán thì clear items cũ.
 `POST /vouchers/validate` (auth)
 
 ```json
-// body
-{ "code": "MEALNOW20", "subtotal": 120000, "deliveryFee": 15000 }
+// body — restaurantId bắt buộc nếu voucher bị giới hạn theo quán/danh mục
+{ "code": "MEALNOW20", "subtotal": 120000, "deliveryFee": 15000, "restaurantId": "<ObjectId quán trong giỏ>" }
 
 // ok
 { "valid": true, "voucher": { ... }, "discount": 24000, "message": "Giảm 24.000đ" }
@@ -347,8 +347,8 @@ pending → confirmed → preparing → delivering → completed
 
 ## 9. Ưu đãi / Rewards
 
-### `GET /vouchers?filter=freeship|discount|payment`
-Public. Có field `almostGone` (gần hết lượt).
+### `GET /vouchers?filter=freeship|discount|payment&restaurantId=`
+Public. Có field `almostGone` (gần hết lượt). Truyền `restaurantId` để chỉ lấy voucher áp dụng được cho quán đó (voucher tạo với `applicableTo: "restaurant"|"category"` trên admin sẽ tự lọc theo `applicableId`).
 
 ### `POST /vouchers/:id/save` (auth)
 Lưu vào `users.savedVoucherIds`.

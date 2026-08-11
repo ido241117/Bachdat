@@ -137,6 +137,20 @@ router.post("/", requireAuth, async (req: AuthRequest, res) => {
     if (!voucher) {
       return res.status(400).json({ error: "Mã voucher không hợp lệ" });
     }
+    if (voucher.applicableTo && voucher.applicableTo !== "all") {
+      const restaurantCategoryIds = (restaurant.categoryIds || []).map((c) =>
+        String(c),
+      );
+      const matches =
+        voucher.applicableTo === "restaurant"
+          ? String(voucher.applicableId) === String(restaurant._id)
+          : voucher.applicableTo === "category"
+            ? restaurantCategoryIds.includes(String(voucher.applicableId))
+            : true;
+      if (!matches) {
+        return res.status(400).json({ error: "Mã không áp dụng cho quán này" });
+      }
+    }
     if (voucher.expiresAt && voucher.expiresAt < new Date()) {
       return res.status(400).json({ error: "Voucher đã hết hạn" });
     }
