@@ -1,15 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-  StyleSheet,
-  ActivityIndicator,
-  RefreshControl,
-  Alert,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator, RefreshControl, Alert } from 'react-native';
 import { Colors } from '../constants/colors';
 import { Order, OrderStatus, STATUS_LABELS } from '../data/orders';
 import { formatPrice } from '../api/format';
@@ -19,6 +9,7 @@ import { TopAppBar } from '../components/TopAppBar';
 import { ReviewModal } from '../components/ReviewModal';
 import { useAuth } from '../context/AuthContext';
 import { useCart, type CartLine } from '../context/CartContext';
+import { styles } from '../styles/screens/OrdersScreen.styles';
 
 type TabType = 'active' | 'history';
 
@@ -284,100 +275,3 @@ export function OrdersScreen({ onTrack, onGoCart }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  tabs: {
-    flexDirection: 'row',
-    backgroundColor: Colors.white,
-    paddingHorizontal: 16,
-  },
-  tab: {
-    flex: 1,
-    alignItems: 'center',
-    paddingVertical: 12,
-    position: 'relative',
-  },
-  tabText: { fontSize: 14, fontWeight: '600', color: Colors.secondary },
-  tabTextActive: { color: Colors.primary },
-  tabIndicator: {
-    position: 'absolute',
-    bottom: 0,
-    height: 2,
-    width: '40%',
-    backgroundColor: Colors.primary,
-    borderRadius: 2,
-  },
-  body: { flex: 1 },
-  bodyContent: { padding: 16, gap: 12, paddingBottom: 32 },
-  errorText: { color: Colors.error, marginBottom: 8 },
-  sectionTitle: {
-    fontSize: 16,
-    fontWeight: '700',
-    color: Colors.onSurface,
-    marginBottom: 4,
-  },
-  emptyText: { color: Colors.secondary, textAlign: 'center', padding: 24 },
-  card: {
-    backgroundColor: Colors.white,
-    borderRadius: 14,
-    padding: 14,
-    gap: 12,
-  },
-  cardCancelled: { opacity: 0.75 },
-  cardHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'flex-start',
-  },
-  cardHeaderLeft: { flexDirection: 'row', gap: 10, flex: 1 },
-  orderImage: { width: 48, height: 48, borderRadius: 10 },
-  restaurantName: { fontSize: 14, fontWeight: '700', color: Colors.onSurface },
-  orderDate: { fontSize: 12, color: Colors.secondary, marginTop: 2 },
-  statusBadge: {
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-  },
-  statusText: { fontSize: 11, fontWeight: '700' },
-  itemsBox: {
-    backgroundColor: Colors.surfaceContainerLow,
-    borderRadius: 8,
-    padding: 10,
-  },
-  itemsText: { fontSize: 13, color: Colors.onSurfaceVariant },
-  cardFooter: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  totalLabel: { fontSize: 11, color: Colors.secondary },
-  totalValue: { fontSize: 16, fontWeight: '700' },
-  actions: { alignItems: 'flex-end', gap: 6 },
-  primaryBtn: {
-    backgroundColor: Colors.primary,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 999,
-  },
-  primaryBtnText: { color: Colors.white, fontWeight: '700', fontSize: 13 },
-  outlineBtn: {
-    borderWidth: 1,
-    borderColor: Colors.primary,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 999,
-  },
-  outlineBtnText: { color: Colors.primary, fontWeight: '700', fontSize: 13 },
-  cancelLink: { paddingHorizontal: 4 },
-  cancelText: { color: Colors.error, fontSize: 12, fontWeight: '600' },
-  reviewBtn: {
-    borderWidth: 1,
-    borderColor: Colors.yellow,
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 999,
-  },
-  reviewBtnText: { color: Colors.onSurface, fontWeight: '700', fontSize: 13 },
-  reviewedText: { color: Colors.secondary, fontSize: 12, fontWeight: '600' },
-});

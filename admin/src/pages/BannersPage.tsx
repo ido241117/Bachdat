@@ -1,5 +1,5 @@
 import { useEffect, useState, type FormEvent } from "react";
-import { api, type BannerRow } from "../api";
+import { api, type BannerRow } from "../lib/api";
 import { Modal } from "../components/Modal";
 
 const empty = {

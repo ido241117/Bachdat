@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { View, StyleSheet, ActivityIndicator } from 'react-native';
+import { View, ActivityIndicator } from 'react-native';
 import {
   NavigationContainer,
   useNavigation,
@@ -25,6 +25,7 @@ import { SelectAddressScreen } from './src/screens/SelectAddressScreen';
 import { AuthProvider, useAuth } from './src/context/AuthContext';
 import { CartProvider } from './src/context/CartContext';
 import { DeliveryLocationProvider } from './src/context/DeliveryLocationContext';
+import { styles } from './src/styles/app/App.styles';
 
 export type RootStackParamList = {
   Main: { tab?: TabKey } | undefined;
@@ -278,15 +279,3 @@ export default function App() {
   );
 }
 
-const styles = StyleSheet.create({
-  main: {
-    flex: 1,
-    backgroundColor: Colors.background,
-  },
-  boot: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.background,
-  },
-});

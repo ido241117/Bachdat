@@ -5,7 +5,7 @@ import {
   type VoucherRow,
   type RestaurantRow,
   type CategoryRow,
-} from "../api";
+} from "../lib/api";
 import { Modal } from "../components/Modal";
 
 const empty = {

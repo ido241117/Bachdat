@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
-import { api, type RestaurantRow } from "../api";
+import { api, type RestaurantRow } from "../lib/api";
 import { Modal } from "../components/Modal";
 
 const empty = {

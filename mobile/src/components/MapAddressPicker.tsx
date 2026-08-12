@@ -1,15 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import {
-  View,
-  Text,
-  Modal,
-  StyleSheet,
-  TouchableOpacity,
-  ActivityIndicator,
-  TextInput,
-  FlatList,
-  Keyboard,
-} from 'react-native';
+import { View, Text, Modal, TouchableOpacity, ActivityIndicator, TextInput, FlatList, Keyboard } from 'react-native';
 import { WebView, type WebViewMessageEvent } from 'react-native-webview';
 import { MaterialIcons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -21,6 +11,7 @@ import {
 } from '../api/goong';
 import { getFreshLatLng, getQuickLatLng } from '../api/location';
 import type { PickedAddress } from './AddressSearchModal';
+import { styles } from '../styles/components/MapAddressPicker.styles';
 
 type Suggestion = PickedAddress & { id: string };
 
@@ -35,7 +26,6 @@ type Props = {
   autoLocate?: boolean;
 };
 
-const PIN_SIZE = 48;
 /** Cần Thơ / An Bình — fallback khi chưa có GPS */
 const DEFAULT = { lat: 10.0312, lng: 105.783 };
 
@@ -644,204 +634,3 @@ export function MapAddressPicker({
   );
 }
 
-const styles = StyleSheet.create({
-  root: { flex: 1, backgroundColor: Colors.background },
-  topBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 8,
-    paddingBottom: 8,
-    backgroundColor: Colors.white,
-  },
-  backBtn: {
-    width: 40,
-    height: 40,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  title: {
-    flex: 1,
-    textAlign: 'center',
-    fontSize: 17,
-    fontWeight: '700',
-    color: Colors.onSurface,
-  },
-  searchRow: {
-    paddingHorizontal: 12,
-    paddingBottom: 10,
-    backgroundColor: Colors.white,
-    zIndex: 20,
-  },
-  searchBox: {
-    height: 42,
-    borderRadius: 10,
-    backgroundColor: Colors.surfaceContainerLow,
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 12,
-    gap: 8,
-  },
-  searchInput: { flex: 1, fontSize: 14, color: Colors.onSurface },
-  suggestBox: {
-    position: 'absolute',
-    left: 12,
-    right: 12,
-    top: 108,
-    maxHeight: 220,
-    backgroundColor: Colors.white,
-    borderRadius: 12,
-    zIndex: 30,
-    elevation: 6,
-    shadowColor: '#000',
-    shadowOpacity: 0.12,
-    shadowRadius: 10,
-    shadowOffset: { width: 0, height: 4 },
-  },
-  suggestRow: {
-    flexDirection: 'row',
-    gap: 8,
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.outlineVariant,
-  },
-  suggestMain: { fontSize: 13, fontWeight: '600', color: Colors.onSurface },
-  suggestSub: { fontSize: 11, color: Colors.secondary, marginTop: 2 },
-  mapWrap: { flex: 1.1, position: 'relative', minHeight: 220 },
-  map: { flex: 1 },
-  mapFallback: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 10,
-    paddingHorizontal: 24,
-  },
-  bootText: {
-    fontSize: 13,
-    color: Colors.secondary,
-    textAlign: 'center',
-  },
-  pinLayer: { ...StyleSheet.absoluteFillObject },
-  pinAnchor: {
-    position: 'absolute',
-    left: '50%',
-    top: '50%',
-    width: PIN_SIZE,
-    height: PIN_SIZE + 10,
-    marginLeft: -PIN_SIZE / 2,
-    marginTop: -(PIN_SIZE + 4),
-    alignItems: 'center',
-  },
-  pinLift: { marginTop: -(PIN_SIZE + 16) },
-  personPin: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
-    backgroundColor: Colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderWidth: 3,
-    borderColor: Colors.white,
-    shadowColor: '#000',
-    shadowOpacity: 0.25,
-    shadowRadius: 4,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 4,
-  },
-  pinTip: {
-    width: 0,
-    height: 0,
-    borderLeftWidth: 7,
-    borderRightWidth: 7,
-    borderTopWidth: 10,
-    borderLeftColor: 'transparent',
-    borderRightColor: 'transparent',
-    borderTopColor: Colors.primary,
-    marginTop: -2,
-  },
-  pinDot: {
-    marginTop: 2,
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-  },
-  recenterBtn: {
-    position: 'absolute',
-    right: 14,
-    bottom: 14,
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: Colors.white,
-    alignItems: 'center',
-    justifyContent: 'center',
-    elevation: 4,
-    shadowColor: '#000',
-    shadowOpacity: 0.15,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-  },
-  bottomSheet: {
-    flex: 0.95,
-    backgroundColor: Colors.white,
-    borderTopLeftRadius: 16,
-    borderTopRightRadius: 16,
-    paddingHorizontal: 12,
-    paddingTop: 8,
-    minHeight: 260,
-    shadowColor: '#000',
-    shadowOpacity: 0.08,
-    shadowRadius: 12,
-    shadowOffset: { width: 0, height: -4 },
-    elevation: 8,
-  },
-  handle: {
-    alignSelf: 'center',
-    width: 36,
-    height: 4,
-    borderRadius: 2,
-    backgroundColor: Colors.outlineVariant,
-    marginBottom: 8,
-  },
-  sheetTitle: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: Colors.secondary,
-    marginBottom: 4,
-    paddingHorizontal: 4,
-  },
-  suggestList: { flex: 1 },
-  listRow: {
-    flexDirection: 'row',
-    gap: 10,
-    paddingVertical: 12,
-    paddingHorizontal: 4,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: Colors.outlineVariant,
-  },
-  listMain: { fontSize: 14, fontWeight: '700', color: Colors.onSurface },
-  listSub: { fontSize: 12, color: Colors.onSurfaceVariant, marginTop: 2, lineHeight: 16 },
-  emptyHint: {
-    textAlign: 'center',
-    color: Colors.textSecondary,
-    paddingVertical: 20,
-    fontSize: 13,
-  },
-  addrLoading: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-    paddingVertical: 16,
-  },
-  addrLoadingText: { color: Colors.secondary, fontSize: 13 },
-  confirmBtn: {
-    backgroundColor: Colors.primary,
-    borderRadius: 12,
-    paddingVertical: 13,
-    alignItems: 'center',
-    marginTop: 8,
-  },
-  confirmDisabled: { opacity: 0.5 },
-  confirmText: { color: Colors.white, fontWeight: '700', fontSize: 15 },
-});

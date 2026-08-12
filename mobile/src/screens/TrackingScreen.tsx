@@ -1,14 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  StyleSheet,
-  ActivityIndicator,
-  Alert,
-  RefreshControl,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, ActivityIndicator, Alert, RefreshControl } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import { formatPrice } from '../api/format';
@@ -17,6 +8,7 @@ import { goongApi, type GoongRoute } from '../api/goong';
 import type { ApiOrder } from '../api/types';
 import { TopAppBar } from '../components/TopAppBar';
 import { GoongMapView, type MapMarker } from '../components/GoongMapView';
+import { styles } from '../styles/screens/TrackingScreen.styles';
 
 interface Props {
   orderId: string;
@@ -301,109 +293,3 @@ export function TrackingScreen({ orderId, onBack, onGoOrders }: Props) {
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  body: { padding: 16, paddingBottom: 40, gap: 12 },
-  mapCard: {
-    height: 220,
-    borderRadius: 16,
-    overflow: 'hidden',
-    backgroundColor: Colors.surfaceContainerHigh,
-    position: 'relative',
-  },
-  map: { flex: 1 },
-  etaBadge: {
-    position: 'absolute',
-    top: 12,
-    left: 12,
-    backgroundColor: Colors.white,
-    borderRadius: 12,
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    maxWidth: '70%',
-  },
-  etaLabel: { fontSize: 11, color: Colors.secondary },
-  etaValue: { fontSize: 14, fontWeight: '700', color: Colors.primary },
-  etaSub: { fontSize: 11, color: Colors.secondary, marginTop: 2 },
-  addressText: { fontSize: 13, color: Colors.onSurfaceVariant, lineHeight: 18 },
-  card: {
-    backgroundColor: Colors.white,
-    borderRadius: 16,
-    padding: 16,
-  },
-  cardTitle: {
-    fontSize: 15,
-    fontWeight: '700',
-    color: Colors.onSurface,
-    marginBottom: 12,
-  },
-  stepRow: { flexDirection: 'row', gap: 12 },
-  stepLeft: { alignItems: 'center', width: 20 },
-  dot: {
-    width: 20,
-    height: 20,
-    borderRadius: 10,
-    backgroundColor: Colors.outlineVariant,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  dotDone: { backgroundColor: Colors.green },
-  dotActive: {
-    backgroundColor: Colors.primary,
-    borderWidth: 4,
-    borderColor: Colors.primaryFixed,
-  },
-  dotPulse: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: Colors.white,
-  },
-  line: {
-    width: 2,
-    flex: 1,
-    minHeight: 24,
-    backgroundColor: Colors.outlineVariant,
-    marginVertical: 2,
-  },
-  lineDone: { backgroundColor: Colors.green },
-  stepContent: { flex: 1, paddingBottom: 16 },
-  stepLabel: { fontSize: 14, color: Colors.textLight, fontWeight: '500' },
-  stepLabelDone: { color: Colors.green },
-  stepLabelActive: { color: Colors.primary, fontWeight: '700' },
-  stepTime: { fontSize: 12, color: Colors.secondary, marginTop: 2 },
-  restaurant: {
-    fontSize: 13,
-    color: Colors.secondary,
-    marginBottom: 8,
-  },
-  itemRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 6,
-  },
-  itemName: { fontSize: 14, color: Colors.onSurfaceVariant, flex: 1 },
-  itemPrice: { fontSize: 14, color: Colors.onSurface },
-  totalRow: {
-    borderTopWidth: 1,
-    borderTopColor: Colors.outlineVariant,
-    marginTop: 8,
-    paddingTop: 8,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-  },
-  totalLabel: { fontWeight: '700', color: Colors.onSurface },
-  totalValue: { fontWeight: '700', color: Colors.primary, fontSize: 16 },
-  secondaryBtn: {
-    backgroundColor: Colors.white,
-    borderRadius: 12,
-    padding: 14,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: Colors.outlineVariant,
-  },
-  secondaryBtnText: { color: Colors.primary, fontWeight: '700' },
-  cancelBtn: { padding: 14, alignItems: 'center' },
-  cancelText: { color: Colors.error, fontWeight: '700' },
-});

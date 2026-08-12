@@ -1,13 +1,5 @@
 import { useEffect, useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-  StyleSheet,
-  ActivityIndicator,
-} from 'react-native';
+import { View, Text, ScrollView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import { formatTierLabel } from '../api/format';
@@ -18,6 +10,7 @@ import { useAuth } from '../context/AuthContext';
 import { mapOrder } from '../api/mappers';
 import type { Order } from '../data/orders';
 import { formatPrice } from '../api/format';
+import { styles } from '../styles/screens/ProfileScreen.styles';
 
 const FALLBACK_AVATAR =
   'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=200';
@@ -88,18 +81,9 @@ export function ProfileScreen({
           <TouchableOpacity style={styles.loginPrimary} onPress={onLogin}>
             <Text style={styles.loginPrimaryText}>Đăng nhập / Đăng ký</Text>
           </TouchableOpacity>
-          <TouchableOpacity style={styles.menuCard} onPress={onOpenAddresses}>
-            <View style={styles.menuItem}>
-              <View style={styles.menuIcon}>
-                <MaterialIcons name="location-on" size={22} color={Colors.primary} />
-              </View>
-              <View style={styles.menuInfo}>
-                <Text style={styles.menuTitle}>Chọn địa chỉ giao hàng</Text>
-                <Text style={styles.menuSubtitle}>Dùng map như ShopeeFood</Text>
-              </View>
-              <MaterialIcons name="chevron-right" size={22} color={Colors.secondary} />
-            </View>
-          </TouchableOpacity>
+          <Text style={styles.guestHint}>
+          
+          </Text>
         </View>
       </View>
     );
@@ -208,114 +192,3 @@ export function ProfileScreen({
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  centered: { flex: 1, alignItems: 'center', justifyContent: 'center' },
-  hero: {
-    backgroundColor: Colors.primary,
-    borderBottomLeftRadius: 28,
-    borderBottomRightRadius: 28,
-    paddingBottom: 24,
-  },
-  profileHeader: { alignItems: 'center', gap: 4, marginTop: 4 },
-  avatar: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    borderWidth: 3,
-    borderColor: Colors.white,
-    backgroundColor: Colors.primaryFixed,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  guestAvatar: {
-    backgroundColor: 'rgba(255,255,255,0.25)',
-  },
-  guestActions: {
-    padding: 16,
-    gap: 14,
-  },
-  loginPrimary: {
-    backgroundColor: Colors.primary,
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  loginPrimaryText: {
-    color: Colors.white,
-    fontWeight: '700',
-    fontSize: 15,
-  },
-  name: { fontSize: 20, fontWeight: '700', color: Colors.white, marginTop: 8 },
-  phone: { fontSize: 13, color: 'rgba(255,255,255,0.85)' },
-  bodyContent: { padding: 16, paddingBottom: 40, gap: 14 },
-  statsGrid: { flexDirection: 'row', gap: 8, marginTop: -8 },
-  statCard: {
-    flex: 1,
-    backgroundColor: Colors.white,
-    borderRadius: 12,
-    padding: 12,
-    alignItems: 'center',
-    gap: 6,
-  },
-  statText: {
-    fontSize: 11,
-    fontWeight: '600',
-    color: Colors.onSurface,
-    textAlign: 'center',
-  },
-  recentCard: {
-    backgroundColor: Colors.white,
-    borderRadius: 14,
-    padding: 14,
-    gap: 4,
-  },
-  recentTitle: { fontSize: 12, color: Colors.secondary, fontWeight: '600' },
-  recentName: { fontSize: 15, fontWeight: '700', color: Colors.onSurface },
-  recentMeta: { fontSize: 12, color: Colors.secondary },
-  recentBtn: { marginTop: 8, alignSelf: 'flex-start' },
-  recentBtnText: { color: Colors.primary, fontWeight: '700', fontSize: 13 },
-  menuCard: {
-    backgroundColor: Colors.white,
-    borderRadius: 14,
-    overflow: 'hidden',
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingHorizontal: 14,
-    paddingVertical: 14,
-    gap: 12,
-  },
-  menuItemBorder: {
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.outlineVariant,
-  },
-  menuIcon: {
-    width: 40,
-    height: 40,
-    borderRadius: 10,
-    backgroundColor: Colors.primaryFixed,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  menuInfo: { flex: 1 },
-  menuTitle: { fontSize: 15, fontWeight: '600', color: Colors.onSurface },
-  menuSubtitle: { fontSize: 12, color: Colors.secondary, marginTop: 2 },
-  logoutBtn: {
-    marginTop: 8,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 8,
-    paddingVertical: 14,
-    borderRadius: 12,
-    backgroundColor: Colors.errorContainer,
-  },
-  logoutText: { color: Colors.error, fontWeight: '700', fontSize: 15 },
-  version: {
-    textAlign: 'center',
-    color: Colors.textLight,
-    fontSize: 12,
-  },
-});

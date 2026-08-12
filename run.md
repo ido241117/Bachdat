@@ -39,7 +39,6 @@ Health: https://bachdat.site/health
 ## 3. Mobile (Terminal 3)
 ```
 cd mobile
-# Điền key Goong trong .env (xem .env.example)
 npx expo start -c
 ```
 

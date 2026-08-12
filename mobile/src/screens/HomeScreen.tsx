@@ -1,15 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  View,
-  Text,
-  ScrollView,
-  TextInput,
-  TouchableOpacity,
-  StyleSheet,
-  ImageBackground,
-  ActivityIndicator,
-  Dimensions,
-} from 'react-native';
+import { View, Text, ScrollView, TextInput, TouchableOpacity, ImageBackground, ActivityIndicator, Dimensions } from 'react-native';
 import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import { Restaurant } from '../data/restaurants';
@@ -21,6 +11,7 @@ import { TopAppBar } from '../components/TopAppBar';
 import { RestaurantCard } from '../components/RestaurantCard';
 import { useCart } from '../context/CartContext';
 import { useDeliveryLocation } from '../context/DeliveryLocationContext';
+import { styles } from '../styles/screens/HomeScreen.styles';
 
 const CATEGORY_ICONS: Record<string, keyof typeof MaterialCommunityIcons.glyphMap> = {
   rice: 'rice',
@@ -341,150 +332,3 @@ export function HomeScreen({
   );
 }
 
-const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: Colors.background },
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: 24,
-  },
-  errorText: { color: Colors.primary, textAlign: 'center' },
-  body: { flex: 1 },
-  bodyContent: { paddingBottom: 100 },
-  searchSection: { paddingHorizontal: 16, paddingVertical: 12 },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: Colors.white,
-    borderRadius: 999,
-    paddingHorizontal: 16,
-    height: 44,
-    gap: 8,
-  },
-  searchInput: { flex: 1, fontSize: 14, color: Colors.onSurface },
-  bannerScroll: { marginBottom: 8 },
-  bannerSlide: { width: Dimensions.get('window').width - 32, marginHorizontal: 16 },
-  banner: { height: 160, borderRadius: 16, overflow: 'hidden' },
-  bannerImage: { borderRadius: 16 },
-  bannerOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.35)',
-    justifyContent: 'center',
-    padding: 20,
-  },
-  bannerTag: {
-    backgroundColor: Colors.primary,
-    alignSelf: 'flex-start',
-    paddingHorizontal: 8,
-    paddingVertical: 4,
-    borderRadius: 8,
-    marginBottom: 4,
-  },
-  bannerTagText: { color: Colors.white, fontSize: 12, fontWeight: '700' },
-  bannerTitle: {
-    color: Colors.white,
-    fontSize: 22,
-    fontWeight: '700',
-    lineHeight: 28,
-    marginBottom: 8,
-  },
-  bannerBtn: {
-    backgroundColor: Colors.white,
-    alignSelf: 'flex-start',
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 999,
-  },
-  bannerBtnText: { color: Colors.primary, fontWeight: '700', fontSize: 13 },
-  dots: {
-    flexDirection: 'row',
-    justifyContent: 'center',
-    gap: 6,
-    marginBottom: 12,
-  },
-  dot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    backgroundColor: Colors.outlineVariant,
-  },
-  dotActive: { backgroundColor: Colors.primary, width: 16 },
-  categoriesSection: { paddingHorizontal: 16, marginBottom: 12 },
-  categoryGrid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    marginHorizontal: -6,
-  },
-  categoryItem: {
-    width: '50%',
-    paddingHorizontal: 6,
-    paddingVertical: 10,
-    alignItems: 'center',
-    gap: 6,
-  },
-  categoryIcon: {
-    width: 56,
-    height: 56,
-    backgroundColor: Colors.white,
-    borderRadius: 16,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  categoryIconActive: { backgroundColor: Colors.primary },
-  categoryLabel: {
-    fontSize: 13,
-    fontWeight: '600',
-    color: Colors.onSurface,
-    textAlign: 'center',
-  },
-  categoryLabelActive: { color: Colors.primary },
-  chipsRow: { paddingHorizontal: 16, gap: 8, paddingBottom: 12 },
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 8,
-    borderRadius: 999,
-    backgroundColor: Colors.white,
-    borderWidth: 1,
-    borderColor: Colors.outlineVariant,
-  },
-  chipActive: {
-    backgroundColor: Colors.primaryFixed,
-    borderColor: Colors.primary,
-  },
-  chipText: { fontSize: 13, color: Colors.onSurfaceVariant, fontWeight: '600' },
-  chipTextActive: { color: Colors.primary },
-  section: { paddingHorizontal: 16 },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-  sectionTitle: { fontSize: 18, fontWeight: '700', color: Colors.onSurface },
-  restaurantList: { gap: 14 },
-  emptyText: { color: Colors.secondary, textAlign: 'center', padding: 24 },
-  cartBar: {
-    position: 'absolute',
-    bottom: 8,
-    left: 16,
-    right: 16,
-    backgroundColor: Colors.primary,
-    borderRadius: 14,
-    padding: 14,
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-  },
-  cartLeft: { flexDirection: 'row', alignItems: 'center', gap: 12 },
-  cartCountBadge: {
-    backgroundColor: 'rgba(255,255,255,0.2)',
-    width: 32,
-    height: 32,
-    borderRadius: 8,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  cartCountText: { color: Colors.white, fontWeight: '700' },
-  cartLabel: { color: Colors.white, fontWeight: '600' },
-  cartTotal: { color: Colors.white, fontWeight: '700', fontSize: 16 },
-});

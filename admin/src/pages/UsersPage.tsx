@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { api, type UserRow } from "../api";
+import { api, type UserRow } from "../lib/api";
 
 export function UsersPage() {
   const [users, setUsers] = useState<UserRow[]>([]);

@@ -1,7 +1,8 @@
 import { useMemo } from 'react';
-import { View, StyleSheet, Text, ActivityIndicator } from 'react-native';
+import { View, Text, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
 import { Colors } from '../constants/colors';
+import { styles } from '../styles/components/GoongMapView.styles';
 
 export type MapMarker = {
   id: string;
@@ -168,19 +169,3 @@ export function GoongMapView({
   );
 }
 
-const styles = StyleSheet.create({
-  wrap: { overflow: 'hidden', backgroundColor: Colors.surfaceContainerHigh },
-  webview: { flex: 1, backgroundColor: 'transparent' },
-  loading: {
-    ...StyleSheet.absoluteFillObject,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.surfaceContainerHigh,
-  },
-  fallback: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Colors.surfaceContainerHigh,
-  },
-  fallbackText: { color: Colors.secondary },
-});

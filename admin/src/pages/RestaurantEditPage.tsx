@@ -1,6 +1,6 @@
 import { useEffect, useState, type FormEvent } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
-import { api, type CategoryRow } from "../api";
+import { api, type CategoryRow } from "../lib/api";
 
 export function RestaurantEditPage() {
   const { id = "" } = useParams();

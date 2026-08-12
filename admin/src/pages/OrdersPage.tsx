@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { api, formatVnd, type OrderRow } from "../api";
+import { api, formatVnd, type OrderRow } from "../lib/api";
 
 const STATUSES = [
   "all",

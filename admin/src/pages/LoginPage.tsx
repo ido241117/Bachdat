@@ -1,6 +1,6 @@
 import { useState, type FormEvent } from "react";
-import { useAuth } from "../auth";
-import { api } from "../api";
+import { useAuth } from "../lib/auth";
+import { api } from "../lib/api";
 
 export function LoginPage() {
   const { login } = useAuth();

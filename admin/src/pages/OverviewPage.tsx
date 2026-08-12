@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { api, formatVnd, type Stats } from "../api";
+import { api, formatVnd, type Stats } from "../lib/api";
 
 export function OverviewPage() {
   const [stats, setStats] = useState<Stats | null>(null);
