@@ -7,8 +7,9 @@ const emptyForm = {
   name: "",
   description: "",
   price: "",
+  originalPrice: "",
   image: "",
-  menuSection: "mains",
+  menuSection: "",
   sortOrder: "0",
   isFeatured: false,
   isAvailable: true,
@@ -68,6 +69,7 @@ export function MenuPage() {
       name: item.name,
       description: item.description || "",
       price: String(item.price),
+      originalPrice: item.originalPrice ? String(item.originalPrice) : "",
       image: item.image || "",
       menuSection: item.menuSection || "mains",
       sortOrder: String(item.sortOrder ?? 0),
@@ -85,6 +87,7 @@ export function MenuPage() {
       name: form.name,
       description: form.description,
       price: Number(form.price),
+      originalPrice: form.originalPrice ? Number(form.originalPrice) : undefined,
       image: form.image,
       menuSection: form.menuSection,
       sortOrder: Number(form.sortOrder || 0),
@@ -145,7 +148,14 @@ export function MenuPage() {
                   ) : null}
                 </td>
                 <td>{item.menuSection}</td>
-                <td>{formatVnd(item.price)}</td>
+                <td>
+                  {formatVnd(item.price)}
+                  {item.originalPrice && item.originalPrice > item.price ? (
+                    <div className="muted small" style={{ textDecoration: "line-through" }}>
+                      {formatVnd(item.originalPrice)}
+                    </div>
+                  ) : null}
+                </td>
                 <td>{item.isFeatured ? "Có" : "—"}</td>
                 <td>{item.isAvailable === false ? "Ẩn" : "Đang bán"}</td>
                 <td className="actions">
@@ -196,18 +206,34 @@ export function MenuPage() {
             />
           </label>
           <label>
-            Nhóm
-            <select
+            Giá gốc (khi giảm giá)
+            <input
+              type="number"
+              min={0}
+              placeholder="Để trống nếu không giảm giá"
+              value={form.originalPrice}
+              onChange={(e) =>
+                setForm({ ...form, originalPrice: e.target.value })
+              }
+            />
+          </label>
+          <label>
+            Nhóm / Tab hiển thị
+            <input
+              list="menu-section-options"
               value={form.menuSection}
               onChange={(e) =>
                 setForm({ ...form, menuSection: e.target.value })
               }
-            >
-              <option value="featured">Nổi bật</option>
-              <option value="mains">Món chính</option>
-              <option value="drinks">Đồ uống</option>
-              <option value="desserts">Tráng miệng</option>
-            </select>
+              placeholder="VD: Bán chạy, Gà, Burger, Combo & Phụ"
+            />
+            <datalist id="menu-section-options">
+              {Array.from(new Set(items.map((i) => i.menuSection))).map(
+                (s) => (
+                  <option key={s} value={s} />
+                ),
+              )}
+            </datalist>
           </label>
           <label>
             Sort

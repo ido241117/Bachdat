@@ -349,6 +349,10 @@ router.post("/restaurants/:id/menu", async (req: AuthRequest, res: Response) => 
     name: body.name.trim(),
     description: body.description || "",
     price: Number(body.price),
+    originalPrice:
+      body.originalPrice != null && body.originalPrice !== ""
+        ? Number(body.originalPrice)
+        : undefined,
     image: body.image || "",
     menuSection: body.menuSection || "mains",
     isFeatured: Boolean(body.isFeatured),

@@ -19,11 +19,12 @@ const menuItemSchema = new Schema(
     name: { type: String, required: true },
     description: { type: String, default: "" },
     price: { type: Number, required: true },
+    originalPrice: { type: Number },
     image: { type: String, default: "" },
     menuSection: {
       type: String,
-      enum: ["featured", "mains", "drinks", "desserts"],
       default: "mains",
+      trim: true,
     },
     isFeatured: { type: Boolean, default: false },
     isAvailable: { type: Boolean, default: true },

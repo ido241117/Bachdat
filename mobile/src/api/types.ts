@@ -38,8 +38,10 @@ export type ApiMenuItem = {
   name: string;
   description: string;
   price: number;
+  originalPrice?: number;
   image: string;
-  menuSection: 'featured' | 'mains' | 'drinks' | 'desserts';
+  menuSection: string;
+  sortOrder?: number;
   options?: { name: string; price: number }[];
 };
 

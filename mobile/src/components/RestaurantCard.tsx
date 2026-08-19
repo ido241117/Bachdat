@@ -18,27 +18,41 @@ export function RestaurantCard({ restaurant, onPress }: Props) {
     >
       <View style={styles.imageWrap}>
         <Image source={{ uri: restaurant.image }} style={styles.image} />
-        <View style={styles.ratingBadge}>
-          <MaterialIcons name="star" size={14} color={Colors.yellow} />
-          <Text style={styles.ratingText}>{restaurant.rating}</Text>
-        </View>
+        {restaurant.popular && (
+          <View style={styles.statusBadge}>
+            <Text style={styles.statusBadgeText}>Hot</Text>
+          </View>
+        )}
         {restaurant.freeship && (
           <View style={styles.freeshipBadge}>
-            <Text style={styles.freeshipText}>Freeship</Text>
+            <Text style={styles.freeshipText}>Ship 0đ</Text>
           </View>
         )}
       </View>
       <View style={styles.info}>
-        <View style={styles.titleRow}>
-          <Text style={styles.name} numberOfLines={1}>
-            {restaurant.name}
-          </Text>
-          <Text style={styles.priceLevel}>{restaurant.priceLevel}</Text>
-        </View>
-        <Text style={styles.cuisine} numberOfLines={1}>
-          {restaurant.cuisine}
+        <Text style={styles.name} numberOfLines={1}>
+          {restaurant.name}
         </Text>
+        {restaurant.tags.length > 0 && (
+          <View style={styles.tagRow}>
+            {restaurant.tags.slice(0, 3).map((tag) => (
+              <View key={tag} style={styles.tagChip}>
+                <Text style={styles.tagChipText} numberOfLines={1}>
+                  {tag}
+                </Text>
+              </View>
+            ))}
+          </View>
+        )}
         <View style={styles.metaRow}>
+          <View style={styles.metaItem}>
+            <MaterialIcons name="star" size={14} color={Colors.yellow} />
+            <Text style={styles.metaText}>
+              {restaurant.rating}
+              {restaurant.reviewCount ? ` (${restaurant.reviewCount})` : ''}
+            </Text>
+          </View>
+          <View style={styles.dot} />
           <View style={styles.metaItem}>
             <MaterialIcons name="schedule" size={14} color={Colors.secondary} />
             <Text style={styles.metaText}>{restaurant.deliveryTime}</Text>

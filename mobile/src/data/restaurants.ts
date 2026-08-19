@@ -2,10 +2,11 @@ export interface MenuItem {
   id: string;
   name: string;
   price: number;
+  originalPrice?: number;
   description: string;
   image: string;
-  category: 'featured' | 'mains' | 'drinks' | 'desserts';
-  layout?: 'card' | 'list' | 'grid';
+  category: string;
+  sortOrder?: number;
 }
 
 export interface Restaurant {
@@ -26,10 +27,3 @@ export interface Restaurant {
   popular?: boolean;
   menu: MenuItem[];
 }
-
-export const MENU_CATEGORIES = [
-  { id: 'featured', label: 'Nổi bật' },
-  { id: 'mains', label: 'Món chính' },
-  { id: 'drinks', label: 'Đồ uống' },
-  { id: 'desserts', label: 'Tráng miệng' },
-] as const;

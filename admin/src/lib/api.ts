@@ -98,6 +98,7 @@ export type MenuRow = {
   name: string;
   description?: string;
   price: number;
+  originalPrice?: number;
   image?: string;
   menuSection: string;
   isFeatured?: boolean;

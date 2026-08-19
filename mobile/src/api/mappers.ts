@@ -28,6 +28,7 @@ const CATEGORY_ICON_MAP: Record<string, string> = {
   sushi: 'fish',
   chicken: 'drumstick',
   coffee: 'coffee',
+  hot_pot: 'hotpot',
 };
 
 export function mapCategory(c: ApiCategory) {
@@ -40,21 +41,15 @@ export function mapCategory(c: ApiCategory) {
 }
 
 export function mapMenuItem(item: ApiMenuItem): MenuItem {
-  const layout =
-    item.menuSection === 'featured'
-      ? 'card'
-      : item.menuSection === 'drinks' || item.menuSection === 'desserts'
-        ? 'grid'
-        : 'list';
-
   return {
     id: item._id,
     name: item.name,
     price: item.price,
+    originalPrice: item.originalPrice,
     description: item.description,
     image: item.image,
     category: item.menuSection,
-    layout,
+    sortOrder: item.sortOrder,
   };
 }
 

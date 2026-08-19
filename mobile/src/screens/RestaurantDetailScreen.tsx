@@ -3,13 +3,27 @@ import { View, Text, ScrollView, TouchableOpacity, Image, ImageBackground, Activ
 import { MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../constants/colors';
-import { Restaurant, MenuItem, MENU_CATEGORIES } from '../data/restaurants';
+import { Restaurant, MenuItem } from '../data/restaurants';
 import { formatPrice, formatOrderDate } from '../api/format';
 import { restaurantApi, reviewsApi } from '../api';
 import { mapMenuItem } from '../api/mappers';
 import type { ApiReview } from '../api/types';
 import { useCart } from '../context/CartContext';
 import { styles } from '../styles/screens/RestaurantDetailScreen.styles';
+
+const KNOWN_SECTION_LABELS: Record<string, string> = {
+  featured: 'Nổi bật',
+  mains: 'Món chính',
+  drinks: 'Đồ uống',
+  desserts: 'Tráng miệng',
+};
+
+const KNOWN_SECTION_ORDER: Record<string, number> = {
+  featured: -4,
+  mains: -3,
+  drinks: -2,
+  desserts: -1,
+};
 
 interface Props {
   restaurant: Restaurant;
@@ -30,7 +44,7 @@ export function RestaurantDetailScreen({
     subtotal,
     wouldSwitchRestaurant,
   } = useCart();
-  const [activeCategory, setActiveCategory] = useState('featured');
+  const [activeCategory, setActiveCategory] = useState('');
   const [menu, setMenu] = useState<MenuItem[]>(restaurant.menu || []);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -52,10 +66,6 @@ export function RestaurantDetailScreen({
         const data = await restaurantApi.getMenu(restaurant.id);
         if (cancelled) return;
         setMenu(data.items.map(mapMenuItem));
-        const firstWithItems = MENU_CATEGORIES.find((c) =>
-          data.items.some((i) => i.menuSection === c.id),
-        );
-        if (firstWithItems) setActiveCategory(firstWithItems.id);
       } catch (err) {
         if (!cancelled) {
           setError(err instanceof Error ? err.message : 'Không tải được menu');
@@ -88,11 +98,28 @@ export function RestaurantDetailScreen({
     loadReviews(1);
   }, [restaurant.id]);
 
-  const visibleCats = useMemo(
-    () =>
-      MENU_CATEGORIES.filter((c) => menu.some((m) => m.category === c.id)),
-    [menu],
-  );
+  const visibleCats = useMemo(() => {
+    const minOrder = new Map<string, number>();
+    menu.forEach((m) => {
+      const so = m.sortOrder ?? 0;
+      const cur = minOrder.get(m.category);
+      if (cur === undefined || so < cur) minOrder.set(m.category, so);
+    });
+    return Array.from(minOrder.keys())
+      .sort(
+        (a, b) =>
+          (KNOWN_SECTION_ORDER[a] ?? minOrder.get(a)!) -
+          (KNOWN_SECTION_ORDER[b] ?? minOrder.get(b)!),
+      )
+      .map((id) => ({ id, label: KNOWN_SECTION_LABELS[id] || id }));
+  }, [menu]);
+
+  useEffect(() => {
+    if (visibleCats.length === 0) return;
+    if (!visibleCats.some((c) => c.id === activeCategory)) {
+      setActiveCategory(visibleCats[0].id);
+    }
+  }, [visibleCats, activeCategory]);
 
   const filteredMenu = useMemo(() => {
     let list = menu.filter((m) => m.category === activeCategory);
@@ -240,6 +267,13 @@ export function RestaurantDetailScreen({
         >
           {filteredMenu.map((item) => {
             const qty = qtyInCart(item.id);
+            const hasDiscount =
+              !!item.originalPrice && item.originalPrice > item.price;
+            const discountPct = hasDiscount
+              ? Math.round(
+                  ((item.originalPrice! - item.price) / item.originalPrice!) * 100,
+                )
+              : 0;
             return (
               <TouchableOpacity
                 key={item.id}
@@ -247,13 +281,19 @@ export function RestaurantDetailScreen({
                 onPress={() => openSheet(item)}
                 activeOpacity={0.85}
               >
-                <Image source={{ uri: item.image }} style={styles.listImage} />
                 <View style={styles.listInfo}>
                   <Text style={styles.listName}>{item.name}</Text>
                   <Text style={styles.listDesc} numberOfLines={2}>
                     {item.description}
                   </Text>
-                  <Text style={styles.listPrice}>{formatPrice(item.price)}</Text>
+                  <View style={styles.priceRow}>
+                    <Text style={styles.listPrice}>{formatPrice(item.price)}</Text>
+                    {hasDiscount && (
+                      <Text style={styles.listOriginalPrice}>
+                        {formatPrice(item.originalPrice!)}
+                      </Text>
+                    )}
+                  </View>
                 </View>
                 <View style={styles.qtyCol}>
                   {qty > 0 ? (
@@ -279,6 +319,14 @@ export function RestaurantDetailScreen({
                     >
                       <MaterialIcons name="add" size={20} color={Colors.white} />
                     </TouchableOpacity>
+                  )}
+                </View>
+                <View style={styles.listImageWrap}>
+                  <Image source={{ uri: item.image }} style={styles.listImage} />
+                  {hasDiscount && (
+                    <View style={styles.discountBadge}>
+                      <Text style={styles.discountBadgeText}>-{discountPct}%</Text>
+                    </View>
                   )}
                 </View>
               </TouchableOpacity>

@@ -23,6 +23,7 @@ const CATEGORY_EMOJIS: Record<string, string> = {
   fish: '🍣',
   drumstick: '🍗',
   coffee: '☕',
+  hotpot: '🍲',
 };
 
 const VISIBLE_CATEGORY_COUNT = 4;
@@ -283,7 +284,7 @@ export function HomeScreen({
             {(
               [
                 { key: 'near', label: 'Gần tôi' },
-                { key: 'popular', label: 'Phổ biến' },
+                { key: 'popular', label: 'Bán chạy' },
                 { key: 'rating', label: 'Đánh giá' },
               ] as const
             ).map((opt) => (
