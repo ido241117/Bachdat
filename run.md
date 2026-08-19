@@ -1,61 +1,52 @@
 # Khởi động app
 
-## 1. Backend (Terminal 1)
+Thứ tự: MongoDB → Backend → Tunnel → Mobile
+
+## MongoDB
+
+MongoDB phải chạy trước backend. Bật service (cần admin):
+
+```powershell
+Start-Service MongoDB
 ```
+
+Hoặc `services.msc` → **MongoDB Server** → Start.
+
+Compass: `mongodb://127.0.0.1:27017/mealnow`
+
+## Backend
+
+```powershell
 cd backend
-npm run seed    # lần đầu / reset data MongoDB
+npm run seed    # lần đầu / reset data
 npm run dev
 ```
 
-MongoDB local: `mongodb://localhost:27017/mealnow`
+Demo: `0901234567` / OTP `123456`  
+Health: http://127.0.0.1:8787/health
 
-Demo login: phone `0901234567` / OTP `123456`
+## Cloudflare Tunnel
 
-API docs (frontend gắn): `backend/API.md`
-
-## 2. Cloudflare Tunnel (Terminal 2)
-
-### Lần đầu (chưa setup tunnel / chưa add domain)
-1. Add **bachdat.site** vào Cloudflare Dashboard → Sites → Add a site (Free plan).
-2. Ở iNET OnePortal → domain `bachdat.site` → **Cập nhật DNS** / đổi Nameserver sang 2 NS Cloudflare đưa (thay `catba.vclouddns.com` / `haiphong.vclouddns.com`). Chờ NS active (có thể vài phút–vài giờ).
-3. Máy này:
-```
-cloudflared tunnel login
-cloudflared tunnel create banhang-api
-cloudflared tunnel route dns banhang-api bachdat.site
-```
-4. Tạo `%USERPROFILE%\.cloudflared\config.yml` (xem mẫu trong repo `cloudflared/config.example.yml`).
-
-### Mỗi lần chạy
-```
+```powershell
 cloudflared tunnel run banhang-api
 ```
 
-Public URL: **https://bachdat.site**  
-(→ `localhost:8787`)
+Public: https://bachdat.site → `127.0.0.1:8787`  
+Config mẫu: `cloudflared/config.example.yml`
 
-Health: https://bachdat.site/health
+## Mobile
 
-## 3. Mobile (Terminal 3)
-```
+```powershell
 cd mobile
 npx expo start -c
 ```
 
-Goong: `EXPO_PUBLIC_GOONG_MAPS_KEY` (map tiles) + `EXPO_PUBLIC_GOONG_API_KEY` (Places/Directions).
+## Admin
 
-## 4. Admin dashboard (web)
-```
+```powershell
 cd admin
 npm install   # lần đầu
 npm run dev
 ```
-Mở http://localhost:5173
 
-Login admin (sau `npm run seed` ở backend):
-- SĐT: `0909999999`
-- OTP: `123456`
-
-API admin: `http://localhost:8787/admin/*` (cần Bearer token role=admin)
-
-Có thể trỏ `admin/.env` → `VITE_API_URL=https://bachdat.site` nếu dùng tunnel.
+http://localhost:5173 — Admin: `0909999999` / OTP `123456`

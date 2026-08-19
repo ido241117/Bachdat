@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { View, Text, ScrollView, TextInput, TouchableOpacity, ImageBackground, ActivityIndicator, Dimensions } from 'react-native';
-import { MaterialIcons, MaterialCommunityIcons } from '@expo/vector-icons';
+import { MaterialIcons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import { Restaurant } from '../data/restaurants';
 import { formatPrice } from '../api/format';
@@ -13,17 +13,19 @@ import { useCart } from '../context/CartContext';
 import { useDeliveryLocation } from '../context/DeliveryLocationContext';
 import { styles } from '../styles/screens/HomeScreen.styles';
 
-const CATEGORY_ICONS: Record<string, keyof typeof MaterialCommunityIcons.glyphMap> = {
-  rice: 'rice',
-  cup: 'cup',
-  noodles: 'noodles',
-  food: 'food',
-  bread: 'bread-slice',
-  pizza: 'pizza',
-  fish: 'fish',
-  drumstick: 'food-drumstick',
-  coffee: 'coffee',
+const CATEGORY_EMOJIS: Record<string, string> = {
+  rice: '🍚',
+  cup: '🧋',
+  noodles: '🍜',
+  food: '🍽️',
+  bread: '🥖',
+  pizza: '🍕',
+  fish: '🍣',
+  drumstick: '🍗',
+  coffee: '☕',
 };
+
+const VISIBLE_CATEGORY_COUNT = 4;
 
 type SortKey = 'popular' | 'near' | 'rating';
 
@@ -50,6 +52,7 @@ export function HomeScreen({
     { id: string; name: string; icon: string; slug: string }[]
   >([]);
   const [selectedCategory, setSelectedCategory] = useState<string | null>(null);
+  const [showAllCategories, setShowAllCategories] = useState(false);
   const [sort, setSort] = useState<SortKey>('near');
   const [freeShipOnly, setFreeShipOnly] = useState(false);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
@@ -214,8 +217,29 @@ export function HomeScreen({
           )}
 
           <View style={styles.categoriesSection}>
+            <View style={styles.categoriesHeader}>
+              <Text style={styles.categoriesTitle}>Danh mục</Text>
+              {categories.length > VISIBLE_CATEGORY_COUNT && (
+                <TouchableOpacity
+                  style={styles.seeAllButton}
+                  onPress={() => setShowAllCategories((v) => !v)}
+                >
+                  <Text style={styles.seeAllText}>
+                    {showAllCategories ? 'Thu gọn' : 'Xem tất cả'}
+                  </Text>
+                  <MaterialIcons
+                    name={showAllCategories ? 'chevron-left' : 'chevron-right'}
+                    size={16}
+                    color={Colors.primary}
+                  />
+                </TouchableOpacity>
+              )}
+            </View>
             <View style={styles.categoryGrid}>
-              {categories.map((cat) => {
+              {(showAllCategories
+                ? categories
+                : categories.slice(0, VISIBLE_CATEGORY_COUNT)
+              ).map((cat) => {
                 const active = selectedCategory === cat.id;
                 return (
                   <TouchableOpacity
@@ -233,11 +257,9 @@ export function HomeScreen({
                         active && styles.categoryIconActive,
                       ]}
                     >
-                      <MaterialCommunityIcons
-                        name={CATEGORY_ICONS[cat.icon] || 'food'}
-                        size={28}
-                        color={active ? Colors.white : Colors.primary}
-                      />
+                      <Text style={styles.categoryEmoji}>
+                        {CATEGORY_EMOJIS[cat.icon] || '🍽️'}
+                      </Text>
                     </View>
                     <Text
                       style={[
