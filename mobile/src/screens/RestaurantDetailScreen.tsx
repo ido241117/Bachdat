@@ -1,5 +1,18 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image, ImageBackground, ActivityIndicator, Modal, Pressable, Alert, TextInput } from 'react-native';
+import {
+  View,
+  Text,
+  ScrollView,
+  TouchableOpacity,
+  Image,
+  ImageBackground,
+  ActivityIndicator,
+  Modal,
+  Pressable,
+  Alert,
+  TextInput,
+  Animated,
+} from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { Colors } from '../constants/colors';
@@ -57,7 +70,13 @@ export function RestaurantDetailScreen({
   const [reviewsPages, setReviewsPages] = useState(1);
   const [reviewsLoading, setReviewsLoading] = useState(false);
   const scrollRef = useRef<ScrollView>(null);
+  const tabScrollRef = useRef<ScrollView>(null);
   const sectionOffsets = useRef<Record<string, number>>({});
+  const tabLayouts = useRef<Record<string, { x: number; width: number }>>({});
+  const lockSpy = useRef(false);
+  const underlineX = useRef(new Animated.Value(0)).current;
+  const underlineW = useRef(new Animated.Value(0)).current;
+  const [catPickerOpen, setCatPickerOpen] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -129,12 +148,75 @@ export function RestaurantDetailScreen({
     return menu.filter((m) => m.name.toLowerCase().includes(q));
   }, [menu, search]);
 
+  const moveUnderline = (id: string, animated = true) => {
+    const layout = tabLayouts.current[id];
+    if (!layout) return;
+    if (animated) {
+      Animated.parallel([
+        Animated.timing(underlineX, {
+          toValue: layout.x,
+          duration: 180,
+          useNativeDriver: false,
+        }),
+        Animated.timing(underlineW, {
+          toValue: layout.width,
+          duration: 180,
+          useNativeDriver: false,
+        }),
+      ]).start();
+    } else {
+      underlineX.setValue(layout.x);
+      underlineW.setValue(layout.width);
+    }
+  };
+
+  const scrollTabIntoView = (id: string) => {
+    const layout = tabLayouts.current[id];
+    if (layout) {
+      tabScrollRef.current?.scrollTo({
+        x: Math.max(0, layout.x - 24),
+        animated: true,
+      });
+    }
+    moveUnderline(id);
+  };
+
   const jumpToCategory = (id: string) => {
     setSearch('');
     setActiveCategory(id);
+    setCatPickerOpen(false);
+    lockSpy.current = true;
+    scrollTabIntoView(id);
     const y = sectionOffsets.current[id];
     if (y != null) {
       scrollRef.current?.scrollTo({ y: Math.max(0, y - 8), animated: true });
+    }
+    setTimeout(() => {
+      lockSpy.current = false;
+    }, 420);
+  };
+
+  useEffect(() => {
+    if (activeCategory) moveUnderline(activeCategory);
+  }, [activeCategory]);
+
+  const handleMenuScroll = (e: {
+    nativeEvent: { contentOffset: { y: number } };
+  }) => {
+    if (search.trim() || lockSpy.current) return;
+    const y = e.nativeEvent.contentOffset.y;
+    let current: string | null = null;
+    let bestOffset = -Infinity;
+    for (const cat of visibleCats) {
+      const off = sectionOffsets.current[cat.id];
+      if (off != null && off - 80 <= y && off > bestOffset) {
+        bestOffset = off;
+        current = cat.id;
+      }
+    }
+    if (current && current !== activeCategory) {
+      setActiveCategory(current);
+      scrollTabIntoView(current);
     }
   };
 
@@ -296,33 +378,62 @@ export function RestaurantDetailScreen({
         />
       </View>
 
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.categoryNav}
-      >
-        {visibleCats.map((cat) => (
-          <TouchableOpacity
-            key={cat.id}
-            style={[
-              styles.categoryChip,
-              activeCategory === cat.id && !search && styles.categoryChipActive,
-            ]}
-            onPress={() => jumpToCategory(cat.id)}
+      {!search.trim() && visibleCats.length > 0 ? (
+        <View style={styles.categoryBar}>
+          <ScrollView
+            ref={tabScrollRef}
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.categoryNav}
           >
-            <Text
+            {visibleCats.map((cat) => {
+              const active = activeCategory === cat.id;
+              return (
+                <TouchableOpacity
+                  key={cat.id}
+                  style={styles.categoryChip}
+                  onPress={() => jumpToCategory(cat.id)}
+                  onLayout={(e) => {
+                    tabLayouts.current[cat.id] = {
+                      x: e.nativeEvent.layout.x,
+                      width: e.nativeEvent.layout.width,
+                    };
+                    if (cat.id === activeCategory) {
+                      moveUnderline(cat.id, false);
+                    }
+                  }}
+                >
+                  <Text
+                    style={[
+                      styles.categoryChipText,
+                      active && styles.categoryChipTextActive,
+                    ]}
+                  >
+                    {cat.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+            <Animated.View
+              pointerEvents="none"
               style={[
-                styles.categoryChipText,
-                activeCategory === cat.id &&
-                  !search &&
-                  styles.categoryChipTextActive,
+                styles.categoryUnderline,
+                { left: underlineX, width: underlineW },
               ]}
-            >
-              {cat.label}
-            </Text>
+            />
+          </ScrollView>
+          <TouchableOpacity
+            style={styles.categoryMore}
+            onPress={() => setCatPickerOpen(true)}
+          >
+            <MaterialIcons
+              name="keyboard-arrow-down"
+              size={22}
+              color={Colors.onSurface}
+            />
           </TouchableOpacity>
-        ))}
-      </ScrollView>
+        </View>
+      ) : null}
 
       {loading ? (
         <View style={styles.menuLoading}>
@@ -337,10 +448,17 @@ export function RestaurantDetailScreen({
           ref={scrollRef}
           contentContainerStyle={styles.menuList}
           showsVerticalScrollIndicator={false}
+          onScroll={handleMenuScroll}
+          scrollEventThrottle={16}
         >
-          {search.trim()
-            ? searchResults.map((item) => renderMenuItem(item))
-            : visibleCats.map((cat) => (
+          {search.trim() ? (
+            <View style={styles.sectionBlock}>
+              {searchResults.map((item) => renderMenuItem(item))}
+            </View>
+          ) : (
+            visibleCats.map((cat) => {
+              const catItems = menu.filter((m) => m.category === cat.id);
+              return (
                 <View
                   key={cat.id}
                   style={styles.sectionBlock}
@@ -348,12 +466,14 @@ export function RestaurantDetailScreen({
                     sectionOffsets.current[cat.id] = e.nativeEvent.layout.y;
                   }}
                 >
-                  <Text style={styles.sectionLabel}>{cat.label}</Text>
-                  {menu
-                    .filter((m) => m.category === cat.id)
-                    .map((item) => renderMenuItem(item))}
+                  <Text style={styles.sectionLabel}>
+                    {cat.label} ({catItems.length})
+                  </Text>
+                  {catItems.map((item) => renderMenuItem(item))}
                 </View>
-              ))}
+              );
+            })
+          )}
 
           <View style={styles.reviewsSection}>
             <Text style={styles.reviewsTitle}>
@@ -380,13 +500,15 @@ export function RestaurantDetailScreen({
                           <MaterialIcons
                             key={n}
                             name={n <= r.rating ? 'star' : 'star-border'}
-                            size={14}
+                            size={12}
                             color={Colors.yellow}
                           />
                         ))}
                       </View>
                     </View>
-                    <Text style={styles.reviewDate}>{formatOrderDate(r.createdAt)}</Text>
+                    <Text style={styles.reviewDate}>
+                      {formatOrderDate(r.createdAt)}
+                    </Text>
                   </View>
                   {r.comment ? (
                     <Text style={styles.reviewComment}>{r.comment}</Text>
@@ -461,6 +583,33 @@ export function RestaurantDetailScreen({
                 </TouchableOpacity>
               </>
             )}
+          </Pressable>
+        </Pressable>
+      </Modal>
+
+      <Modal visible={catPickerOpen} transparent animationType="fade">
+        <Pressable style={styles.modalBg} onPress={() => setCatPickerOpen(false)}>
+          <Pressable style={styles.catSheet} onPress={(e) => e.stopPropagation()}>
+            <Text style={styles.catSheetTitle}>Danh mục</Text>
+            {visibleCats.map((cat) => (
+              <TouchableOpacity
+                key={cat.id}
+                style={styles.catSheetRow}
+                onPress={() => jumpToCategory(cat.id)}
+              >
+                <Text
+                  style={[
+                    styles.catSheetLabel,
+                    cat.id === activeCategory && styles.catSheetLabelActive,
+                  ]}
+                >
+                  {cat.label}
+                </Text>
+                {cat.id === activeCategory ? (
+                  <MaterialIcons name="check" size={20} color={Colors.primary} />
+                ) : null}
+              </TouchableOpacity>
+            ))}
           </Pressable>
         </Pressable>
       </Modal>
