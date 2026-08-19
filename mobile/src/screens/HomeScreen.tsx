@@ -1,10 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
-import { View, Text, ScrollView, TextInput, TouchableOpacity, ImageBackground, ActivityIndicator, Dimensions } from 'react-native';
+import { View, Text, ScrollView, TextInput, TouchableOpacity, ImageBackground, Image, ActivityIndicator, Dimensions } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { Colors } from '../constants/colors';
 import { Restaurant } from '../data/restaurants';
 import { formatPrice } from '../api/format';
-import { homeApi } from '../api';
+import { homeApi, restaurantApi } from '../api';
 import { mapCategory, mapRestaurant } from '../api/mappers';
 import type { ApiBanner } from '../api/types';
 import { TopAppBar } from '../components/TopAppBar';
@@ -57,6 +57,11 @@ export function HomeScreen({
   const [sort, setSort] = useState<SortKey>('near');
   const [freeShipOnly, setFreeShipOnly] = useState(false);
   const [restaurants, setRestaurants] = useState<Restaurant[]>([]);
+  const [searchResults, setSearchResults] = useState<{
+    restaurants: Restaurant[];
+    dishes: { id: string; name: string; price: number; image: string; restaurant: Restaurant }[];
+  } | null>(null);
+  const [searchLoading, setSearchLoading] = useState(false);
 
   const addressLabel =
     location?.fullAddress || location?.label || 'Chọn địa chỉ giao hàng';
@@ -87,6 +92,41 @@ export function HomeScreen({
       cancelled = true;
     };
   }, [locationReady, location?.lat, location?.lng]);
+
+  useEffect(() => {
+    const q = search.trim();
+    if (!q) {
+      setSearchResults(null);
+      setSearchLoading(false);
+      return;
+    }
+    let cancelled = false;
+    setSearchLoading(true);
+    const timer = setTimeout(async () => {
+      try {
+        const res = await restaurantApi.search(q, location?.lat, location?.lng);
+        if (cancelled) return;
+        setSearchResults({
+          restaurants: res.restaurants.map((r) => mapRestaurant(r)),
+          dishes: res.dishes.map((d) => ({
+            id: d._id,
+            name: d.name,
+            price: d.price,
+            image: d.image,
+            restaurant: mapRestaurant(d.restaurant),
+          })),
+        });
+      } catch {
+        if (!cancelled) setSearchResults({ restaurants: [], dishes: [] });
+      } finally {
+        if (!cancelled) setSearchLoading(false);
+      }
+    }, 350);
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [search, location?.lat, location?.lng]);
 
   const filtered = useMemo(() => {
     let list = [...restaurants];
@@ -164,7 +204,7 @@ export function HomeScreen({
             </View>
           </View>
 
-          {banners.length > 0 && (
+          {!searchResults && banners.length > 0 && (
             <ScrollView
               horizontal
               pagingEnabled
@@ -206,7 +246,7 @@ export function HomeScreen({
               ))}
             </ScrollView>
           )}
-          {banners.length > 1 && (
+          {!searchResults && banners.length > 1 && (
             <View style={styles.dots}>
               {banners.map((b, i) => (
                 <View
@@ -217,6 +257,8 @@ export function HomeScreen({
             </View>
           )}
 
+          {!searchResults && (
+          <>
           <View style={styles.categoriesSection}>
             <View style={styles.categoriesHeader}>
               <Text style={styles.categoriesTitle}>Danh mục</Text>
@@ -314,25 +356,91 @@ export function HomeScreen({
               </Text>
             </TouchableOpacity>
           </ScrollView>
+          </>
+          )}
 
-          <View style={styles.section}>
-            <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Gợi ý cho bạn</Text>
-            </View>
-            <View style={styles.restaurantList}>
-              {filtered.length === 0 ? (
-                <Text style={styles.emptyText}>Không tìm thấy quán phù hợp</Text>
+          {searchResults ? (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>
+                  Kết quả cho "{search.trim()}"
+                </Text>
+              </View>
+              {searchLoading ? (
+                <ActivityIndicator color={Colors.primary} />
+              ) : searchResults.restaurants.length === 0 &&
+                searchResults.dishes.length === 0 ? (
+                <Text style={styles.emptyText}>
+                  Không tìm thấy quán hoặc món phù hợp
+                </Text>
               ) : (
-                filtered.map((restaurant) => (
-                  <RestaurantCard
-                    key={restaurant.id}
-                    restaurant={restaurant}
-                    onPress={onRestaurantPress}
-                  />
-                ))
+                <>
+                  {searchResults.restaurants.length > 0 && (
+                    <View style={styles.restaurantList}>
+                      {searchResults.restaurants.map((restaurant) => (
+                        <RestaurantCard
+                          key={restaurant.id}
+                          restaurant={restaurant}
+                          onPress={onRestaurantPress}
+                        />
+                      ))}
+                    </View>
+                  )}
+                  {searchResults.dishes.length > 0 && (
+                    <View style={styles.dishResults}>
+                      <Text style={styles.dishResultsTitle}>Món ăn phù hợp</Text>
+                      {searchResults.dishes.map((dish) => (
+                        <TouchableOpacity
+                          key={dish.id}
+                          style={styles.dishResultRow}
+                          activeOpacity={0.85}
+                          onPress={() => onRestaurantPress(dish.restaurant)}
+                        >
+                          <Image
+                            source={{ uri: dish.image }}
+                            style={styles.dishResultImage}
+                          />
+                          <View style={styles.dishResultInfo}>
+                            <Text style={styles.dishResultName} numberOfLines={1}>
+                              {dish.name}
+                            </Text>
+                            <Text
+                              style={styles.dishResultRestaurant}
+                              numberOfLines={1}
+                            >
+                              {dish.restaurant.name}
+                            </Text>
+                          </View>
+                          <Text style={styles.dishResultPrice}>
+                            {formatPrice(dish.price)}
+                          </Text>
+                        </TouchableOpacity>
+                      ))}
+                    </View>
+                  )}
+                </>
               )}
             </View>
-          </View>
+          ) : (
+            <View style={styles.section}>
+              <View style={styles.sectionHeader}>
+                <Text style={styles.sectionTitle}>Gợi ý cho bạn</Text>
+              </View>
+              <View style={styles.restaurantList}>
+                {filtered.length === 0 ? (
+                  <Text style={styles.emptyText}>Không tìm thấy quán phù hợp</Text>
+                ) : (
+                  filtered.map((restaurant) => (
+                    <RestaurantCard
+                      key={restaurant.id}
+                      restaurant={restaurant}
+                      onPress={onRestaurantPress}
+                    />
+                  ))
+                )}
+              </View>
+            </View>
+          )}
         </ScrollView>
       )}
 

@@ -186,6 +186,22 @@ export type ApiMission = {
   target: number;
 };
 
+export type ApiSearchDish = {
+  _id: string;
+  name: string;
+  description: string;
+  price: number;
+  originalPrice?: number;
+  image: string;
+  restaurant: ApiRestaurant;
+};
+
+export type ApiSearchResult = {
+  query: string;
+  restaurants: ApiRestaurant[];
+  dishes: ApiSearchDish[];
+};
+
 export type HomeResponse = {
   banners: ApiBanner[];
   categories: ApiCategory[];

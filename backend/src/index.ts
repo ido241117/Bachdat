@@ -1,4 +1,5 @@
 import "dotenv/config";
+import path from "path";
 import express from "express";
 import cors from "cors";
 import { connectDB } from "./config/db";
@@ -21,6 +22,7 @@ async function main() {
   const app = express();
   app.use(cors());
   app.use(express.json());
+  app.use("/images", express.static(path.join(__dirname, "../public/images")));
 
   app.get("/", (_req, res) => {
     res.json({

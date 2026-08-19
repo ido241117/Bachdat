@@ -13,6 +13,7 @@ import type {
   LoginResult,
   ReviewsResponse,
   ApiReview,
+  ApiSearchResult,
 } from './types';
 
 export const authApi = {
@@ -50,6 +51,12 @@ export const restaurantApi = {
       location?: { type: string; coordinates: [number, number] };
       address?: string;
     }>(`/restaurants/${id}`),
+  search: (q: string, lat?: number, lng?: number) => {
+    const params = new URLSearchParams({ q });
+    if (lat != null) params.set('lat', String(lat));
+    if (lng != null) params.set('lng', String(lng));
+    return api<ApiSearchResult>(`/restaurants/search?${params.toString()}`);
+  },
 };
 
 export const reviewsApi = {

@@ -50,6 +50,81 @@ router.get("/", async (req, res) => {
   );
 });
 
+function escapeRegex(str: string) {
+  return str.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+router.get("/search", async (req, res) => {
+  const {
+    q = "",
+    lat = "10.7769",
+    lng = "106.7009",
+    minPrice,
+    maxPrice,
+  } = req.query as Record<string, string>;
+
+  const query = q.trim();
+  if (!query) {
+    return res.json({ query, restaurants: [], dishes: [] });
+  }
+
+  const userLat = Number(lat);
+  const userLng = Number(lng);
+  const re = new RegExp(escapeRegex(query), "i");
+
+  const dishFilter: Record<string, unknown> = { isAvailable: true, name: re };
+  const min = Number(minPrice);
+  const max = Number(maxPrice);
+  if (Number.isFinite(min) || Number.isFinite(max)) {
+    dishFilter.price = {
+      ...(Number.isFinite(min) ? { $gte: min } : {}),
+      ...(Number.isFinite(max) ? { $lte: max } : {}),
+    };
+  }
+
+  const [restaurants, dishes] = await Promise.all([
+    Restaurant.find({
+      isOpen: true,
+      $or: [{ name: re }, { tags: re }],
+    })
+      .sort({ isPopular: -1, rating: -1 })
+      .limit(20),
+    MenuItem.find(dishFilter)
+      .populate({ path: "restaurantId", match: { isOpen: true } })
+      .sort({ sortOrder: 1 })
+      .limit(30),
+  ]);
+
+  res.json({
+    query,
+    restaurants: restaurants.map((r) => {
+      const [rLng, rLat] = r.location?.coordinates || [106.7009, 10.7769];
+      return {
+        ...r.toObject(),
+        distanceKm: haversineKm(userLng, userLat, rLng, rLat),
+      };
+    }),
+    dishes: dishes
+      .filter((d) => d.restaurantId)
+      .map((d) => {
+        const restaurant = d.restaurantId as any;
+        const [rLng, rLat] = restaurant.location?.coordinates || [106.7009, 10.7769];
+        return {
+          _id: d._id,
+          name: d.name,
+          description: d.description,
+          price: d.price,
+          originalPrice: d.originalPrice,
+          image: d.image,
+          restaurant: {
+            ...restaurant.toObject(),
+            distanceKm: haversineKm(userLng, userLat, rLng, rLat),
+          },
+        };
+      }),
+  });
+});
+
 router.get("/:id", async (req, res) => {
   const { id } = req.params;
   const lat = Number(req.query.lat) || 10.7769;
