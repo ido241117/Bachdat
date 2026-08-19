@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image, ImageBackground, ActivityIndicator, Modal, Pressable, Alert, TextInput } from 'react-native';
 import { MaterialIcons } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
@@ -56,6 +56,8 @@ export function RestaurantDetailScreen({
   const [reviewsPage, setReviewsPage] = useState(1);
   const [reviewsPages, setReviewsPages] = useState(1);
   const [reviewsLoading, setReviewsLoading] = useState(false);
+  const scrollRef = useRef<ScrollView>(null);
+  const sectionOffsets = useRef<Record<string, number>>({});
 
   useEffect(() => {
     let cancelled = false;
@@ -121,14 +123,20 @@ export function RestaurantDetailScreen({
     }
   }, [visibleCats, activeCategory]);
 
-  const filteredMenu = useMemo(() => {
-    let list = menu.filter((m) => m.category === activeCategory);
-    if (search.trim()) {
-      const q = search.toLowerCase();
-      list = menu.filter((m) => m.name.toLowerCase().includes(q));
+  const searchResults = useMemo(() => {
+    const q = search.trim().toLowerCase();
+    if (!q) return [];
+    return menu.filter((m) => m.name.toLowerCase().includes(q));
+  }, [menu, search]);
+
+  const jumpToCategory = (id: string) => {
+    setSearch('');
+    setActiveCategory(id);
+    const y = sectionOffsets.current[id];
+    if (y != null) {
+      scrollRef.current?.scrollTo({ y: Math.max(0, y - 8), animated: true });
     }
-    return list;
-  }, [menu, activeCategory, search]);
+  };
 
   const qtyInCart = (id: string) =>
     items.find((i) => i.menuItemId === id)?.quantity || 0;
@@ -161,6 +169,73 @@ export function RestaurantDetailScreen({
   const openSheet = (item: MenuItem) => {
     setSelected(item);
     setSheetQty(Math.max(1, qtyInCart(item.id) || 1));
+  };
+
+  const renderMenuItem = (item: MenuItem) => {
+    const qty = qtyInCart(item.id);
+    const hasDiscount = !!item.originalPrice && item.originalPrice > item.price;
+    const discountPct = hasDiscount
+      ? Math.round(
+          ((item.originalPrice! - item.price) / item.originalPrice!) * 100,
+        )
+      : 0;
+    return (
+      <TouchableOpacity
+        key={item.id}
+        style={styles.listItem}
+        onPress={() => openSheet(item)}
+        activeOpacity={0.85}
+      >
+        <View style={styles.listInfo}>
+          <Text style={styles.listName}>{item.name}</Text>
+          <Text style={styles.listDesc} numberOfLines={2}>
+            {item.description}
+          </Text>
+          <View style={styles.priceRow}>
+            <Text style={styles.listPrice}>{formatPrice(item.price)}</Text>
+            {hasDiscount && (
+              <Text style={styles.listOriginalPrice}>
+                {formatPrice(item.originalPrice!)}
+              </Text>
+            )}
+          </View>
+        </View>
+        <View style={styles.qtyCol}>
+          {qty > 0 ? (
+            <View style={styles.stepper}>
+              <TouchableOpacity
+                style={styles.stepBtn}
+                onPress={() => updateQty(item.id, -1)}
+              >
+                <MaterialIcons name="remove" size={16} color={Colors.primary} />
+              </TouchableOpacity>
+              <Text style={styles.stepVal}>{qty}</Text>
+              <TouchableOpacity
+                style={styles.stepBtn}
+                onPress={() => handleAdd(item)}
+              >
+                <MaterialIcons name="add" size={16} color={Colors.primary} />
+              </TouchableOpacity>
+            </View>
+          ) : (
+            <TouchableOpacity
+              style={styles.addCircle}
+              onPress={() => handleAdd(item)}
+            >
+              <MaterialIcons name="add" size={20} color={Colors.white} />
+            </TouchableOpacity>
+          )}
+        </View>
+        <View style={styles.listImageWrap}>
+          <Image source={{ uri: item.image }} style={styles.listImage} />
+          {hasDiscount && (
+            <View style={styles.discountBadge}>
+              <Text style={styles.discountBadgeText}>-{discountPct}%</Text>
+            </View>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
   };
 
   return (
@@ -233,10 +308,7 @@ export function RestaurantDetailScreen({
               styles.categoryChip,
               activeCategory === cat.id && !search && styles.categoryChipActive,
             ]}
-            onPress={() => {
-              setSearch('');
-              setActiveCategory(cat.id);
-            }}
+            onPress={() => jumpToCategory(cat.id)}
           >
             <Text
               style={[
@@ -262,76 +334,26 @@ export function RestaurantDetailScreen({
         </View>
       ) : (
         <ScrollView
+          ref={scrollRef}
           contentContainerStyle={styles.menuList}
           showsVerticalScrollIndicator={false}
         >
-          {filteredMenu.map((item) => {
-            const qty = qtyInCart(item.id);
-            const hasDiscount =
-              !!item.originalPrice && item.originalPrice > item.price;
-            const discountPct = hasDiscount
-              ? Math.round(
-                  ((item.originalPrice! - item.price) / item.originalPrice!) * 100,
-                )
-              : 0;
-            return (
-              <TouchableOpacity
-                key={item.id}
-                style={styles.listItem}
-                onPress={() => openSheet(item)}
-                activeOpacity={0.85}
-              >
-                <View style={styles.listInfo}>
-                  <Text style={styles.listName}>{item.name}</Text>
-                  <Text style={styles.listDesc} numberOfLines={2}>
-                    {item.description}
-                  </Text>
-                  <View style={styles.priceRow}>
-                    <Text style={styles.listPrice}>{formatPrice(item.price)}</Text>
-                    {hasDiscount && (
-                      <Text style={styles.listOriginalPrice}>
-                        {formatPrice(item.originalPrice!)}
-                      </Text>
-                    )}
-                  </View>
+          {search.trim()
+            ? searchResults.map((item) => renderMenuItem(item))
+            : visibleCats.map((cat) => (
+                <View
+                  key={cat.id}
+                  style={styles.sectionBlock}
+                  onLayout={(e) => {
+                    sectionOffsets.current[cat.id] = e.nativeEvent.layout.y;
+                  }}
+                >
+                  <Text style={styles.sectionLabel}>{cat.label}</Text>
+                  {menu
+                    .filter((m) => m.category === cat.id)
+                    .map((item) => renderMenuItem(item))}
                 </View>
-                <View style={styles.qtyCol}>
-                  {qty > 0 ? (
-                    <View style={styles.stepper}>
-                      <TouchableOpacity
-                        style={styles.stepBtn}
-                        onPress={() => updateQty(item.id, -1)}
-                      >
-                        <MaterialIcons name="remove" size={16} color={Colors.primary} />
-                      </TouchableOpacity>
-                      <Text style={styles.stepVal}>{qty}</Text>
-                      <TouchableOpacity
-                        style={styles.stepBtn}
-                        onPress={() => handleAdd(item)}
-                      >
-                        <MaterialIcons name="add" size={16} color={Colors.primary} />
-                      </TouchableOpacity>
-                    </View>
-                  ) : (
-                    <TouchableOpacity
-                      style={styles.addCircle}
-                      onPress={() => handleAdd(item)}
-                    >
-                      <MaterialIcons name="add" size={20} color={Colors.white} />
-                    </TouchableOpacity>
-                  )}
-                </View>
-                <View style={styles.listImageWrap}>
-                  <Image source={{ uri: item.image }} style={styles.listImage} />
-                  {hasDiscount && (
-                    <View style={styles.discountBadge}>
-                      <Text style={styles.discountBadgeText}>-{discountPct}%</Text>
-                    </View>
-                  )}
-                </View>
-              </TouchableOpacity>
-            );
-          })}
+              ))}
 
           <View style={styles.reviewsSection}>
             <Text style={styles.reviewsTitle}>

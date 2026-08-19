@@ -21,6 +21,7 @@ export interface Restaurant {
   /** Số km để sort “Gần tôi” */
   distanceKm?: number;
   tags: string[];
+  categoryIds: string[];
   priceLevel: string;
   cuisine: string;
   freeship?: boolean;

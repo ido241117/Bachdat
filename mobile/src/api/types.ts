@@ -4,6 +4,7 @@ export type ApiRestaurant = {
   slug: string;
   coverImage: string;
   tags: string[];
+  categoryIds?: string[];
   rating: number;
   reviewCount: number;
   priceLevel: string;

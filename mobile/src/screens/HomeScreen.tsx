@@ -139,16 +139,7 @@ export function HomeScreen({
       );
     }
     if (selectedCategory) {
-      const cat = categories.find((c) => c.id === selectedCategory);
-      if (cat) {
-        list = list.filter((r) =>
-          r.tags.some(
-            (t) =>
-              t.toLowerCase().includes(cat.name.toLowerCase()) ||
-              t.toLowerCase().includes(cat.slug.toLowerCase()),
-          ),
-        );
-      }
+      list = list.filter((r) => r.categoryIds.includes(selectedCategory));
     }
     if (freeShipOnly) list = list.filter((r) => r.freeship);
     if (sort === 'rating') list.sort((a, b) => b.rating - a.rating);

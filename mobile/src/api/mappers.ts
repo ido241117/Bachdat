@@ -68,6 +68,7 @@ export function mapRestaurant(
     distance: formatDistance(r.distanceKm ?? 0),
     distanceKm: r.distanceKm ?? 0,
     tags: r.tags || [],
+    categoryIds: (r.categoryIds || []).map(String),
     priceLevel: r.priceLevel,
     cuisine: (r.tags || []).join(', '),
     freeship: r.hasFreeShip,
