@@ -18,8 +18,8 @@ router.post("/login", async (req, res) => {
     name?: string;
   };
 
-  if (!phone || !/^\d{9,11}$/.test(phone)) {
-    return res.status(400).json({ error: "Số điện thoại không hợp lệ" });
+  if (!phone || !/^\d{10}$/.test(phone)) {
+    return res.status(400).json({ error: "Số điện thoại phải có đúng 10 chữ số" });
   }
   if (otp !== env.devOtp) {
     return res.status(400).json({ error: "OTP không đúng" });

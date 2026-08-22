@@ -7,7 +7,7 @@ import { authApi } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { styles } from '../styles/screens/LoginScreen.styles';
 
-const PHONE_REGEX = /^\d{9,11}$/;
+const PHONE_REGEX = /^\d{10}$/;
 const RESEND_COOLDOWN = 30;
 
 type LoginScreenProps = {
